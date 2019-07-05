@@ -13,6 +13,9 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
     const PROCESSING = 2;
     const CANCELED = 7;
     const FAILED = 10;
+    const REFUNDED = 11;
+    const REVERSED = 12;
+    const PROCESSED = 15;
 
     protected $type = 'creditcard';
 
@@ -44,17 +47,15 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         // $this->request->post;
 
         try {
+            $cardType = 'cc';
+
             $apiHost = rtrim($this->getShopConfigVal('api_host'), '/') . '/';
             Client::setApiUrl($apiHost);
 
             $apiUser = $this->getShopConfigVal('api_user');
             $apiPassword = htmlspecialchars_decode($this->getShopConfigVal('api_password'));
-            /**
-             * get dynamically
-             */
-            $apiKey = $this->getShopConfigVal('cc_api_key_cc');
-            $apiSecret = $this->getShopConfigVal('cc_api_secret_cc');
-
+            $apiKey = $this->getShopConfigVal('cc_api_key_' . $cardType);
+            $apiSecret = $this->getShopConfigVal('cc_api_secret_' . $cardType);
             $client = new Client($apiUser, $apiPassword, $apiKey, $apiSecret);
 
             $debit = new Debit();
@@ -69,11 +70,11 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
             $customer->setIpAddress($order['ip']);
             $debit->setCustomer($customer);
 
-            $debit->setSuccessUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/response&orderId=' . $orderId, '&success=1', 'SSL'));
-            $debit->setCancelUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/response&orderId=' . $orderId . '&cancelled=1', '', 'SSL'));
-            $debit->setErrorUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/response&orderId=' . $orderId, '&failed=1', 'SSL'));
+            $debit->setSuccessUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/response&orderId=' . $orderId, '&success=1'));
+            $debit->setCancelUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/response&orderId=' . $orderId . '&cancelled=1'));
+            $debit->setErrorUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/response&orderId=' . $orderId, '&failed=1'));
 
-            $debit->setCallbackUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/callback&orderId=' . $orderId, '', 'SSL'));
+            $debit->setCallbackUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/callback&orderId=' . $orderId . '&cardType=' . $cardType));
 
             $paymentResult = $client->debit($debit);
         } catch (\Throwable $e) {
@@ -141,6 +142,51 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         $this->session->data['error'] = $this->language->get('order_error');
         $this->model_checkout_order->addOrderHistory($orderId, self::FAILED, '', false);
         $this->response->redirect($this->url->link('checkout/checkout'));
+    }
+
+    public function callback()
+    {
+        $this->load->model('checkout/order');
+        $this->load->language('extension/payment/cloudpay');
+
+        $notification = file_get_contents('php://input');
+
+        // $cardType = !empty($_REQUEST['cardType']) ? $_REQUEST['cardType'] : null;
+        // $apiUser = $this->getShopConfigVal('api_user');
+        // $apiPassword = htmlspecialchars_decode($this->getShopConfigVal('api_password'));
+        // $apiKey = $this->getShopConfigVal('cc_api_key_' . $cardType);
+        // $apiSecret = $this->getShopConfigVal('cc_api_secret_' . $cardType);
+        // $client = new Client($apiUser, $apiPassword, $apiKey, $apiSecret);
+        //
+        // if (empty($_SERVER['HTTP_DATE']) || empty($_SERVER['HTTP_AUTHORIZATION']) ||
+        //     $client->validateCallback($notification, $_SERVER['QUERY_STRING'], $_SERVER['HTTP_DATE'], $_SERVER['HTTP_AUTHORIZATION'])
+        // ) {
+        //     die('invalid callback');
+        // }
+
+        $xml = simplexml_load_string($notification);
+        $data = json_decode(json_encode($xml),true);
+
+        $orderId = $data['transactionId'];
+
+        if ($data['result'] !== 'OK') {
+            $this->model_checkout_order->addOrderHistory($orderId, self::FAILED);
+            die('OK');
+        }
+
+        switch ($data['transactionType']) {
+            case 'CHARGEBACK-REVERSAL':
+                $this->model_checkout_order->addOrderHistory($orderId, self::REVERSED);
+                break;
+            case 'CHARGEBACK':
+                $this->model_checkout_order->addOrderHistory($orderId, self::REFUNDED);
+                break;
+            case 'DEBIT':
+                $this->model_checkout_order->addOrderHistory($orderId, self::PROCESSED);
+                break;
+        }
+
+        die('OK');
     }
 
     public function getShopConfigVal($field)
