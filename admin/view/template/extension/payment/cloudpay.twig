@@ -28,7 +28,7 @@
             </div>
             <div class="panel-body">
                 <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-payment" class="form-horizontal">
-                    <div class="form-group required">
+                    <div class="form-group required" style="border: none; margin-top:0;">
                         <label class="col-sm-2 control-label" for="input-status">{{ config_status }}</label>
                         <div class="col-sm-10">
                             <select name="{{ prefix ~ 'status' }}" id="input-status" class="form-control">
@@ -46,7 +46,7 @@
                         </div>
                     </div>
                     {% for key, lang_title in title %}
-                        <div class="form-group required">
+                        <div class="form-group required" style="border: none; margin-top:0;">
                             <label class="col-sm-2 control-label" for="input-{{ title_lang }}">{{ config_title ~ ' ' ~ key|upper }}</label>
                             <div class="col-sm-10">
                                 <input name="{{ prefix ~ 'title' }}[{{ key }}]"
@@ -60,7 +60,7 @@
                             </div>
                         </div>
                     {% endfor %}
-                    <div class="form-group required">
+                    <div class="form-group required" style="border: none; margin-top:0;">
                         <label class="col-sm-2 control-label" for="input-sort-order">{{ config_sort_order }}</label>
                         <div class="col-sm-10">
                             <input name="{{ prefix ~ 'sort_order' }}"
@@ -78,7 +78,7 @@
 
                     <h3 class="panel-title"><b>{{ text_credentials }}</b></h3>
 
-                    <div class="form-group required">
+                    <div class="form-group required" style="border: none; margin-top:0;">
                         <label class="col-sm-2 control-label" for="input-base-url">{{ config_api_host }}</label>
                         <div class="col-sm-10">
                             <input name="{{ prefix ~ 'api_host' }}"
@@ -88,7 +88,7 @@
                                    value="{{ api_host }}">
                         </div>
                     </div>
-                    <div class="form-group required">
+                    <div class="form-group required" style="border: none; margin-top:0;">
                         <label class="col-sm-2 control-label" for="input-http-user">{{ config_api_user }}</label>
                         <div>{{ input[prefix ~ 'api_user'] }}</div>
                         <div class="col-sm-10">
@@ -99,7 +99,7 @@
                                    value="{{ api_user }}">
                         </div>
                     </div>
-                    <div class="form-group required">
+                    <div class="form-group required" style="border: none; margin-top:0;">
                         <label class="col-sm-2 control-label" for="input-http-password">{{ config_api_password }}</label>
                         <div class="col-sm-10">
                             <input name="{{ prefix ~ 'api_password' }}"
@@ -110,63 +110,83 @@
                         </div>
                     </div>
 
-                    <hr>
-
-                    <h3 class="panel-title"><b>{{ text_credit_cards }}</b></h3>
-
-                    {% for credit_card_type, credit_card_name in credit_cards %}
+                    {% for credit_card in credit_cards %}
                         <hr>
-
-                        <h5 class="panel-title">{{ credit_card_name }}</h5>
-{#                        <div class="form-group required">#}
-{#                            <label class="col-sm-2 control-label" for="input-status">{{ config_status }}</label>#}
-{#                            <div class="col-sm-10">#}
-{#                                <select name="{{ prefix ~ 'status' }}" id="input-status" class="form-control">#}
-{#                                    {% if status %}#}
-{#                                        <option value="1" selected="selected">{{ text_enabled }}</option>#}
-{#                                        <option value="0">{{ text_disabled }}</option>#}
-{#                                    {% else %}#}
-{#                                        <option value="1">{{ text_enabled }}</option>#}
-{#                                        <option value="0" selected="selected">{{ text_disabled }}</option>#}
-{#                                    {% endif %}#}
-{#                                </select>#}
-{#                                <p class="help-block" style="margin-bottom: 0">#}
-{#                                    {{ config_status_desc }}#}
-{#                                </p>#}
-{#                            </div>#}
-{#                        </div>#}
-                        <div class="form-group required">
-                            <label class="col-sm-2 control-label" for="input-merchant-account-id">{{ config_cc_api_key }}</label>
-                            <div class="col-sm-10">
-                                <input name="{{ prefix ~ 'cc_api_key_' ~ credit_card_type }}"
-                                       id="input-merchant-account-id"
-                                       class="form-control"
-                                       type="text"
-                                       value="{{ cc_api_key_cc }}">
+                        <h3 class="panel-title">
+                            <img src="/image/catalog/cloudpay/cc/{{ credit_card.type }}.svg" style="height: 40px;margin-right: 10px" alt="{{ credit_card.name }}">
+                            <b>{{ credit_card.name }}</b>
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group required" style="border: none; margin-top:0;">
+                                    <label class="col-sm-2 col-md-4 control-label" for="input-status">{{ config_status }}</label>
+                                    <div class="col-sm-10 col-md-8">
+                                        <select name="{{ prefix ~ 'cc_status_' ~ credit_card.type }}" id="input-status" class="form-control">
+                                            {% if credit_card.status %}
+                                                <option value="1" selected="selected">{{ text_enabled }}</option>
+                                                <option value="0">{{ text_disabled }}</option>
+                                            {% else %}
+                                                <option value="1">{{ text_enabled }}</option>
+                                                <option value="0" selected="selected">{{ text_disabled }}</option>
+                                            {% endif %}
+                                        </select>
+                                        <p class="help-block" style="margin-bottom: 0">
+                                            {{ config_cc_status_desc }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="border: none; margin-top:0;">
+                                    <label class="col-sm-2 col-md-4 control-label" for="input-merchant-account-id">{{ config_cc_api_key }}</label>
+                                    <div class="col-sm-10 col-md-8">
+                                        <input name="{{ prefix ~ 'cc_api_key_' ~ credit_card.type }}"
+                                               id="input-merchant-account-id"
+                                               class="form-control"
+                                               type="text"
+                                               value="{{ credit_card.api_key }}">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="border: none; margin-top:0;">
+                                    <label class="col-sm-2 col-md-4 control-label" for="input-merchant-secret">{{ config_cc_api_secret }}</label>
+                                    <div class="col-sm-10 col-md-8">
+                                        <input name="{{ prefix ~ 'cc_api_secret_' ~ credit_card.type }}"
+                                               id="input-merchant-secret"
+                                               class="form-control"
+                                               type="text"
+                                               value="{{ credit_card.api_secret }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group" style="border: none; margin-top:0;">
+                                    <label class="col-sm-2 col-md-4 control-label" for="input-status">{{ config_cc_seamless }}</label>
+                                    <div class="col-sm-10 col-md-8">
+                                        <select name="{{ prefix ~ 'cc_seamless_' ~ credit_card.type }}" id="input-status" class="form-control">
+                                            {% if credit_card.seamless %}
+                                                <option value="1" selected="selected">{{ text_enabled }}</option>
+                                                <option value="0">{{ text_disabled }}</option>
+                                            {% else %}
+                                                <option value="1">{{ text_enabled }}</option>
+                                                <option value="0" selected="selected">{{ text_disabled }}</option>
+                                            {% endif %}
+                                        </select>
+                                        <p class="help-block" style="margin-bottom: 0">
+                                            {{ config_cc_seamless_desc }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="border: none; margin-top:0;">
+                                    <label class="col-sm-2 col-md-4 control-label" for="input-merchant-secret">{{ config_cc_integration_key }}</label>
+                                    <div class="col-sm-10 col-md-8">
+                                        <input name="{{ prefix ~ 'cc_integration_key_' ~ credit_card.type }}"
+                                               id="input-merchant-secret"
+                                               class="form-control"
+                                               type="text"
+                                               value="{{ credit_card.integration_key }}">
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="form-group required">
-                            <label class="col-sm-2 control-label" for="input-merchant-secret">{{ config_cc_api_secret }}</label>
-                            <div class="col-sm-10">
-                                <input name="{{ prefix ~ 'cc_api_secret_' ~ credit_card_type }}"
-                                       id="input-merchant-secret"
-                                       class="form-control"
-                                       type="text"
-                                       value="{{ cc_api_secret_cc }}">
-                            </div>
-                        </div>
-{#                        <div class="form-group required">#}
-{#                            <label class="col-sm-2 control-label" for="input-merchant-secret">{{ config_cc_integration_key }}</label>#}
-{#                            <div class="col-sm-10">#}
-{#                                <input name="{{ prefix ~ 'cc_integration_key_' ~ credit_card_type }}"#}
-{#                                       id="input-merchant-secret"#}
-{#                                       class="form-control"#}
-{#                                       type="text"#}
-{#                                       value="{{ cc_integration_key_cc }}">#}
-{#                            </div>#}
-{#                        </div>#}
                     {% endfor %}
-
                 </form>
             </div>
         </div>

@@ -1,18 +1,73 @@
+<div class="buttons">
+    {% for credit_card in credit_cards %}
+        <button type="button" class="btn btn-secondary" data-card-type="{{ credit_card.type }}">
+            <img src="/image/catalog/cloudpay/cc/{{ credit_card.type }}.svg" style="height: 28px;margin-right: 10px" alt="{{ credit_card.name }}">
+            {{ credit_card.name }}
+        </button>
+    {% endfor %}
+</div>
 
-{#{% include 'default/template/extension/payment/cloudpay_creditcard_redirect.twig' %}#}
-{#{% include 'default/template/extension/payment/cloudpay_creditcard_iframe.twig' with { 'loading_text': loading_text } %}#}
-{#{% include 'default/template/extension/payment/cloudpay_creditcard_seamless.twig' with { 'loading_text': loading_text } %}#}
+<form id="cloudpay_form" action="{{ action }}" enctype="multipart/form-data" method="post" class="form">
+    <input type="hidden" name="card_type" id="cloudpay_card_type">
+    <input type="hidden" name="token" id="cloudpay_token">
 
-<form id="cloudpay-form" action="{{ action }}" enctype="multipart/form-data" method="post" class="form form-horizontal">
+    <div id="cloudpay_seamless" style="display: none">
+        <input type="hidden" id="cloudpay_seamless_email" value="{{ email }}">
+        <div class="form-group">
+            <label class="control-label" for="cloudpay_seamless_card_holder">{{ card_holder }}</label>
+            <input class="form-control" id="cloudpay_seamless_card_holder">
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="form-group">
+                    <label class="control-label">{{ card_number }}</label>
+                    <div class="form-control" id="cloudpay_seamless_card_number" style="padding: 0"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="control-label">{{ card_ccv }}</label>
+                    <div class="form-control" id="cloudpay_seamless_cvv" style="padding: 0"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="control-label" for="cloudpay_seamless_expiry_month">{{ card_expiry_month }}</label>
+                    <select class="form-control" id="cloudpay_seamless_expiry_month">
+                        {% for month in months %}
+                            <option value="{{ month }}">{{ month }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="control-label" for="cloudpay_seamless_expiry_year">{{ card_expiry_year }}</label>
+                    <select class="form-control" id="cloudpay_seamless_expiry_year">
+                        {% for year in years %}
+                            <option value="{{ year }}">{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="buttons clearfix">
         <div class="pull-right">
-            <input type="button" value="{{ button_confirm }}" id="button-confirm" data-loading-text="{{ text_loading }}" class="btn btn-primary"/>
+            <input type="button" disabled value="{{ button_confirm }}" id="cloudpay_form_submit" data-loading-text="{{ text_loading }}" class="btn btn-primary"/>
         </div>
     </div>
 </form>
 
+{#<link rel="stylesheet" href="/catalog/view/javascript/bootstrap/css/bootstrap.min.css">#}
+{#<link rel="stylesheet" href="/catalog/view/theme/default/stylesheet/stylesheet.css">#}
 {#<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>#}
+<script data-main="payment-js" src="{{ api_host }}js/integrated/payment.min.js"></script>
 <script>
     window.paymentType = "{{ type }}";
+    window.cards = {{ credit_cards_json }};
 </script>
 <script src="catalog/view/javascript/cloudpay_creditcard.js"></script>

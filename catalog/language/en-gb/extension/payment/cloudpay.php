@@ -4,4 +4,10 @@ $_['order_error'] = 'An error occurred during the payment process. Please try ag
 $_['button_confirm'] = 'Confirm Order';
 
 $_['redirect_text'] = 'You are being redirected. Please wait.';
-$_['loading_text'] = 'Credit card payment form is loading.';
+$_['loading_text'] = 'Payment form is loading.';
+
+$_['card_holder'] = 'Card Holder';
+$_['card_number'] = 'Card Number';
+$_['card_ccv'] = 'CCV';
+$_['card_expiry_month'] = 'Expiry Month';
+$_['card_expiry_year'] = 'Expiry Year';

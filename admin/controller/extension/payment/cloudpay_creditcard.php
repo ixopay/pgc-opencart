@@ -1,13 +1,15 @@
 <?php
 include_once(DIR_SYSTEM . 'library/cloudpay/autoload.php');
 
-class ControllerExtensionPaymentCloudPayCreditCard extends Controller
+final class ControllerExtensionPaymentCloudPayCreditCard extends Controller
 {
-    protected $type = 'creditcard';
+    use CloudPayGateway;
 
-    protected $prefix = 'payment_cloudpay_';
+    private $type = 'creditcard';
 
-    protected $default = [
+    private $prefix = 'payment_cloudpay_';
+
+    private $default = [
         'status' => 0,
         'title' => 'CloudPay Credit Card',
         'sort_order' => 1,
@@ -15,57 +17,29 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         'api_host' => '',
         'api_password' => '',
         'api_user' => '',
-
-        /**
-         * TODO: load in dynamically
-         */
-        // 'cc_enabled' => true,
-        // 'cc_api_key' => '',
-        // 'cc_api_secret' => '',
-        // 'cc_integration_key' => '',
-        // 'cc_seamless' => false,
     ];
 
-    protected $config_fields = [
+    private $config_fields = [
         'status',
-
         'api_host',
         'api_user',
         'api_password',
         'sort_order',
-
-        /**
-         * TODO: load in dynamically
-         */
-        // 'cc_enabled_cc',
-        'cc_api_key_cc',
-        'cc_api_secret_cc',
-        // 'cc_integration_key_cc',
-        // 'cc_seamless_cc',
     ];
 
-    protected $multi_lang_fields = [
+    private $multi_lang_fields = [
         'title',
     ];
 
-    protected $mandatory_fields = [
+    private $mandatory_fields = [
         'status',
 
         'api_host',
         'api_user',
         'api_password',
-
-        /**
-         * TODO: handle those like multi lang fields -> set as mandatory dynamically
-         */
-        // 'cc_enabled_cc',
-        // 'cc_api_key_cc',
-        // 'cc_api_secret_cc',
-        // 'cc_integration_key_cc',
-        // 'cc_seamless_cc',
     ];
 
-    protected $language_fields = [
+    private $language_fields = [
         'text_enabled',
         'text_disabled',
         'config_status',
@@ -76,19 +50,18 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         'config_sort_order_desc',
 
         'text_credentials',
-        'wrong_url_format',
         'config_api_host',
         'config_api_user',
         'config_api_password',
 
         'config_cc_api_key',
         'config_cc_api_secret',
+        'config_cc_integration_key',
     ];
 
     public function index()
     {
         $this->load->language('extension/payment/cloudpay_creditcard');
-
         $this->load->model('setting/setting');
 
         $this->document->setTitle($this->language->get('heading_title'));
@@ -104,8 +77,6 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
             }
         }
 
-        $basic_data = new CloudPayPlugin();
-        // prefix for payment type
         $data['prefix'] = $this->prefix . $this->type . '_';
         $data['type'] = $this->type;
 
@@ -117,24 +88,32 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         $data['cancel'] = $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment', true);
         $data['user_token'] = $this->session->data['user_token'];
 
-        $this->load->model('localisation/country');
-        $data['countries'] = $this->model_localisation_country->getCountries();
-        $this->load->model('localisation/currency');
-        $data['currencies'] = $this->model_localisation_currency->getCurrencies();
+        $creditCards = $this->getCreditCards();
+        foreach ($creditCards as $creditCard) {
+            $this->config_fields[] = 'cc_status_' . $creditCard['type'];
+            $this->config_fields[] = 'cc_api_key_' . $creditCard['type'];
+            $this->config_fields[] = 'cc_api_secret_' . $creditCard['type'];
+            $this->config_fields[] = 'cc_integration_key_' . $creditCard['type'];
+            $this->config_fields[] = 'cc_seamless_' . $creditCard['type'];
+            $this->mandatory_fields[] = 'cc_status_' . $creditCard['type'];
+        }
+        $data['credit_cards'] = $creditCards;
 
+        $plugin = new CloudPayPlugin();
         $data = array_merge(
             $data,
-            $this->createBreadcrumbs(),
-            $this->getConfigText(),
-            $this->getRequestData(),
-            $basic_data->getTemplateData()
+            $this->getBreadcrumbData(),
+            $this->getLanguageData(),
+            $this->getConfigData(),
+            $plugin->getTemplateData()
         );
+
         $data = $this->loadConfigBlocks($data);
 
         $this->response->setOutput($this->load->view('extension/payment/cloudpay', $data));
     }
 
-    protected function createBreadcrumbs()
+    private function getBreadcrumbData()
     {
         $data['breadcrumbs'] = [];
 
@@ -156,42 +135,31 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         return $data;
     }
 
-    protected function getLogger()
-    {
-        return new Logger($this->config);
-    }
-
-    protected function getConfigText()
-    {
-        return $this->getLanguageFields($this->language_fields);
-    }
-
-    protected function getRequestData()
+    private function getLanguageData()
     {
         $data = [];
-        foreach ($this->config_fields as $config_field) {
-            $data[$config_field] = is_array($this->getConfigVal($config_field)) ? $this->getConfigVal($config_field) : (string)$this->getConfigVal($config_field);
+        foreach ($this->language_fields as $field_text) {
+            $data[$field_text] = $this->language->get($field_text);
         }
         return $data;
     }
 
-    private function getConfigVal($key)
+    private function getConfigData()
     {
-        $prefix = $this->prefix . $this->type . '_';
-        if ($this->config->get($prefix . $key) != null) {
-            return $this->config->get($prefix . $key);
+        $data = [];
+        foreach ($this->config_fields as $config_field) {
+            $data[$config_field] = is_array($this->getConfig($config_field)) ? $this->getConfig($config_field) : (string)$this->getConfig($config_field);
         }
-        return isset($this->default[$key]) ? $this->default[$key] : null;
+        return $data;
     }
 
-    public function loadConfigBlocks($data)
+    private function loadConfigBlocks($data)
     {
-        $data['language_code'] = $this->getActiveLanguageCode();
         $data = array_merge($data, $this->getConfigFields($this->multi_lang_fields, $this->prefix, $this->type, $this->default));
         return $data;
     }
 
-    protected function validate($formFields)
+    private function validate($formFields)
     {
         if (!$this->user->hasPermission('modify', 'extension/payment/cloudpay_' . $this->type)) {
             $this->error['warning'] = $this->language->get('error_permission');
@@ -207,21 +175,19 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         return !$this->error;
     }
 
-    private function getLanguageFields($config_field_texts)
+    private function getConfigFields($fields, $prefix, $type, $default)
     {
-        $data = [];
-        foreach ($config_field_texts as $field_text) {
-            $data[$field_text] = $this->language->get($field_text);
-        }
-        return $data;
-    }
+        $this->load->model('localisation/language');
 
-    public function getConfigFields($fields, $prefix, $type, $default)
-    {
+        $language_codes = [];
+        foreach ($this->model_localisation_language->getLanguages() as $language) {
+            array_push($language_codes, preg_split('/[-_]/', $language['code'])[0]);
+        }
+
         $prefix = $prefix . $type . '_';
         $keys = [];
         foreach ($fields as $field) {
-            foreach ($this->getAllLanguagesCodes() as $code) {
+            foreach ($language_codes as $code) {
                 $keys[$field][$code] = $default[$field];
                 if (is_array($this->config->get($prefix . $field)) &&
                     array_key_exists($code, $this->config->get($prefix . $field))) {
@@ -230,39 +196,5 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
             }
         }
         return $keys;
-    }
-
-    /**
-     * Get the currently active language code (e.g. en_gb, de_de, ..)
-     *
-     * @return string
-     */
-    public function getActiveLanguageCode()
-    {
-        $this->load->model('localisation/language');
-        $available_languages = $this->model_localisation_language->getLanguages();
-        $current_language_id = $this->config->get('config_language_id');
-
-        $current_language = array_filter($available_languages, function ($language) use ($current_language_id) {
-            return $current_language_id == $language['language_id'];
-        });
-
-        return str_replace('-', '_', reset($current_language)['code']);
-    }
-
-    /**
-     * Get shop language codes
-     *
-     * @return array
-     */
-    private function getAllLanguagesCodes()
-    {
-        $this->load->model('localisation/language');
-
-        $data = [];
-        foreach ($this->model_localisation_language->getLanguages() as $language) {
-            array_push($data, preg_split('/[-_]/', $language['code'])[0]);
-        }
-        return $data;
     }
 }

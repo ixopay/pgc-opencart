@@ -12,7 +12,7 @@ class ModelExtensionPaymentCloudPayCreditCard extends Model
         $base_url = $this->config->get('config_url');
 
         $this->load->language('extension/payment/cloudpay_' . $this->type);
-        $logo = '<img src="' . $base_url . 'image/catalog/cloudpay_' . $this->type . '.png" />';
+        $logo = '<img src="' . $base_url . 'image/catalog/cloudpay/' . $this->type . '.png" />';
         $code = $this->session->data['language'];
         $code = substr($code, 0, 2);
         $title = $logo . ' ' . $this->config->get($prefix . '_title')['en'];

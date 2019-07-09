@@ -23,8 +23,11 @@ $_['config_api_host'] = 'Host';
 $_['config_api_user'] = 'User';
 $_['config_api_password'] = 'Password';
 
-$_['text_credit_cards'] = 'Credit Cards';
+$_['config_cc_status_desc'] = 'Activate card type to make it available for your consumers.<br>API Key and Secret have to be set to make the option appear during checkout.<br>If seamless is enabled Integration Key is required as well.';
 $_['config_cc_api_key'] = 'Key';
 $_['config_cc_api_secret'] = 'Secret';
+$_['config_cc_integration_key'] = 'Integration Key';
+$_['config_cc_seamless'] = 'Seamless';
+$_['config_cc_seamless_desc'] = 'Use seamless form instead of redirects.';
 
 $_['text_success'] = 'Your modifications are saved!';

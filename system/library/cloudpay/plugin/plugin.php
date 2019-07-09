@@ -1,10 +1,10 @@
 <?php
 
-class CloudPayPlugin
+final class CloudPayPlugin
 {
     public function getVersion()
     {
-        return '1.0.0';
+        return '1.1.0';
     }
 
     public function getName()
@@ -27,23 +27,6 @@ class CloudPayPlugin
         return [
             'plugin_name' => self::getName(),
             'plugin_version' => self::getVersion(),
-            'credit_cards' => self::getCreditCards(),
-        ];
-    }
-
-    public function getCreditCards()
-    {
-        return [
-            'cc' => 'Credit Card',
-            // 'visa' => 'Visa',
-            // 'mastercard' => 'MasterCard',
-            // 'amex' => 'Amex',
-            // 'diners' => 'Diners',
-            // 'jcb' => 'JCB',
-            // 'discover' => 'Discover',
-            // 'unionpay' => 'UnionPay',
-            // 'maestro' => 'Maestro',
-            // 'uatp' => 'UATP',
         ];
     }
 }

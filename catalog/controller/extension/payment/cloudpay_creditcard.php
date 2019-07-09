@@ -7,8 +7,10 @@ use CloudPay\Client\Data\Customer;
 use CloudPay\Client\Transaction\Debit;
 use CloudPay\Client\Transaction\Result as TransactionResult;
 
-class ControllerExtensionPaymentCloudPayCreditCard extends Controller
+final class ControllerExtensionPaymentCloudPayCreditCard extends Controller
 {
+    use CloudPayGateway;
+
     const PENDING = 1;
     const PROCESSING = 2;
     const CANCELED = 7;
@@ -17,9 +19,9 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
     const REVERSED = 12;
     const PROCESSED = 15;
 
-    protected $type = 'creditcard';
+    private $type = 'creditcard';
 
-    protected $prefix = 'payment_cloudpay_';
+    private $prefix = 'payment_cloudpay_';
 
     public function index($data = null)
     {
@@ -29,6 +31,21 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         $this->load->language('extension/payment/cloudpay');
         $data['loading_text'] = $this->language->get('loading_text');
         $data['button_confirm'] = $this->language->get('button_confirm');
+
+        $creditCards = $this->getCreditCardsPublic();
+        $data['credit_cards'] = $creditCards;
+        $data['credit_cards_json'] = json_encode($creditCards);
+
+        $year = date('Y');
+        $data['months'] = range(1, 12);
+        $data['years'] = range($year, $year + 50);
+
+        $orderId = $this->session->data['order_id'];
+        $order = $this->model_checkout_order->getOrder($orderId);
+        $data['email'] = $order['email'];
+
+        $apiHost = rtrim($this->getConfig('api_host'), '/') . '/';
+        $data['api_host'] = $apiHost;
 
         return $this->load->view('extension/payment/cloudpay', $data);
     }
@@ -44,21 +61,29 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         $order = $this->model_checkout_order->getOrder($orderId);
         $amount = round($order['total'], 2);
 
-        // $this->request->post;
+        $cardType = $this->request->post['card_type'];
 
         try {
-            $cardType = 'cc';
 
-            $apiHost = rtrim($this->getShopConfigVal('api_host'), '/') . '/';
+            $apiHost = rtrim($this->getConfig('api_host'), '/') . '/';
             Client::setApiUrl($apiHost);
 
-            $apiUser = $this->getShopConfigVal('api_user');
-            $apiPassword = htmlspecialchars_decode($this->getShopConfigVal('api_password'));
-            $apiKey = $this->getShopConfigVal('cc_api_key_' . $cardType);
-            $apiSecret = $this->getShopConfigVal('cc_api_secret_' . $cardType);
+            $apiUser = $this->getConfig('api_user');
+            $apiPassword = htmlspecialchars_decode($this->getConfig('api_password'));
+            $apiKey = $this->getConfig('cc_api_key_' . $cardType);
+            $apiSecret = $this->getConfig('cc_api_secret_' . $cardType);
             $client = new Client($apiUser, $apiPassword, $apiKey, $apiSecret);
 
             $debit = new Debit();
+
+            if ($this->getConfig('cc_seamless_' . $cardType)) {
+                $token = (string)$this->request->post['token'];
+                if (empty($token)) {
+                    die('empty token');
+                }
+                $debit->setTransactionToken($token);
+            }
+
             $debit->setTransactionId($this->session->data['order_id']);
             $debit->setAmount(number_format($amount, 2, '.', ''));
             $debit->setCurrency($order['currency_code']);
@@ -70,11 +95,10 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
             $customer->setIpAddress($order['ip']);
             $debit->setCustomer($customer);
 
-            $debit->setSuccessUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/response&orderId=' . $orderId, '&success=1'));
-            $debit->setCancelUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/response&orderId=' . $orderId . '&cancelled=1'));
-            $debit->setErrorUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/response&orderId=' . $orderId, '&failed=1'));
-
-            $debit->setCallbackUrl($this->url->link('extension/payment/cloudpay_' . $this->type . '/callback&orderId=' . $orderId . '&cardType=' . $cardType));
+            $debit->setSuccessUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/cloudpay_' . $this->type . '/response', ['orderId' => $orderId, 'success' => 1])));
+            $debit->setCancelUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/cloudpay_' . $this->type . '/response', ['orderId' => $orderId, 'cancelled' => 1])));
+            $debit->setErrorUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/cloudpay_' . $this->type . '/response', ['orderId' => $orderId, 'failed' => 1])));
+            $debit->setCallbackUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/cloudpay_' . $this->type . '/callback', 'orderId=' . $orderId, '&cardType=' . $cardType)));
 
             $paymentResult = $client->debit($debit);
         } catch (\Throwable $e) {
@@ -95,7 +119,10 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
             } elseif ($paymentResult->getReturnType() == TransactionResult::RETURN_TYPE_PENDING) {
                 // payment is pending, wait for callback to complete
             } elseif ($paymentResult->getReturnType() == TransactionResult::RETURN_TYPE_FINISHED) {
-                //
+                // seamless will finish here
+                $this->model_checkout_order->addOrderHistory($orderId, self::PROCESSING, '', false);
+                $this->response->redirect($this->url->link('checkout/success'));
+                return;
             }
         }
 
@@ -137,6 +164,7 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         if ($success) {
             $this->model_checkout_order->addOrderHistory($orderId, self::PROCESSING, '', false);
             $this->response->redirect($this->url->link('checkout/success'));
+            return;
         }
 
         $this->session->data['error'] = $this->language->get('order_error');
@@ -152,10 +180,10 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         $notification = file_get_contents('php://input');
 
         // $cardType = !empty($_REQUEST['cardType']) ? $_REQUEST['cardType'] : null;
-        // $apiUser = $this->getShopConfigVal('api_user');
-        // $apiPassword = htmlspecialchars_decode($this->getShopConfigVal('api_password'));
-        // $apiKey = $this->getShopConfigVal('cc_api_key_' . $cardType);
-        // $apiSecret = $this->getShopConfigVal('cc_api_secret_' . $cardType);
+        // $apiUser = $this->getConfig('api_user');
+        // $apiPassword = htmlspecialchars_decode($this->getConfig('api_password'));
+        // $apiKey = $this->getConfig('cc_api_key_' . $cardType);
+        // $apiSecret = $this->getConfig('cc_api_secret_' . $cardType);
         // $client = new Client($apiUser, $apiPassword, $apiKey, $apiSecret);
         //
         // if (empty($_SERVER['HTTP_DATE']) || empty($_SERVER['HTTP_AUTHORIZATION']) ||
@@ -165,7 +193,7 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         // }
 
         $xml = simplexml_load_string($notification);
-        $data = json_decode(json_encode($xml),true);
+        $data = json_decode(json_encode($xml), true);
 
         $orderId = $data['transactionId'];
 
@@ -187,16 +215,6 @@ class ControllerExtensionPaymentCloudPayCreditCard extends Controller
         }
 
         die('OK');
-    }
-
-    public function getShopConfigVal($field)
-    {
-        return $this->config->get($this->prefix . $this->type . '_' . $field);
-    }
-
-    public function getType()
-    {
-        return $this->type;
     }
 }
 
