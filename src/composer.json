@@ -1,0 +1,19 @@
+{
+  "name": "payment-gateway-cloud/payment-gateway-cloud-opencart",
+  "description": "",
+  "type": "opencart-plugin",
+  "license": "",
+  "require": {
+    "php": ">=7.1",
+    "psr/log": "^1.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "PaymentGatewayCloud\\Client\\": "upload/system/library/payment-gateway-cloud/client/",
+      "PaymentGatewayCloud\\": "upload/system/library/payment-gateway-cloud/plugin/"
+    }
+  },
+  "config": {
+    "vendor-dir": "upload/system/library/payment-gateway-cloud/"
+  }
+}

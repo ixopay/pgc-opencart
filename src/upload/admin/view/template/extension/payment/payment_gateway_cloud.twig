@@ -1,0 +1,195 @@
+{{ header }}{{ column_left }}
+<div id="content">
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="pull-right">
+                <button type="submit" form="form-payment" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
+                <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a></div>
+            <h1>{{ heading_title }}</h1>
+            <ul class="breadcrumb">
+                {% for breadcrumb in breadcrumbs %}
+                    <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="container-fluid">
+        {% if error %}
+            <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        {% endif %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                {{ plugin_name }}&nbsp;{{ plugin_version }}
+            </div>
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-pencil"></i>{{ text_edit }}</h3>
+            </div>
+            <div class="panel-body">
+                <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-payment" class="form-horizontal">
+                    <div class="form-group required" style="border: none; margin-top:0;">
+                        <label class="col-sm-2 control-label" for="input-status">{{ config_status }}</label>
+                        <div class="col-sm-10">
+                            <select name="{{ prefix ~ 'status' }}" id="input-status" class="form-control">
+                                {% if status %}
+                                    <option value="1" selected="selected">{{ text_enabled }}</option>
+                                    <option value="0">{{ text_disabled }}</option>
+                                {% else %}
+                                    <option value="1">{{ text_enabled }}</option>
+                                    <option value="0" selected="selected">{{ text_disabled }}</option>
+                                {% endif %}
+                            </select>
+                            <p class="help-block" style="margin-bottom: 0">
+                                {{ config_status_desc }}
+                            </p>
+                        </div>
+                    </div>
+                    {% for key, lang_title in title %}
+                        <div class="form-group required" style="border: none; margin-top:0;">
+                            <label class="col-sm-2 control-label" for="input-{{ title_lang }}">{{ config_title ~ ' ' ~ key|upper }}</label>
+                            <div class="col-sm-10">
+                                <input name="{{ prefix ~ 'title' }}[{{ key }}]"
+                                       id="input-title"
+                                       class="form-control"
+                                       type="text"
+                                       value="{{ lang_title }}">
+                                <p class="help-block" style="margin-bottom: 0">
+                                    {{ config_title_desc }}
+                                </p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="form-group required" style="border: none; margin-top:0;">
+                        <label class="col-sm-2 control-label" for="input-sort-order">{{ config_sort_order }}</label>
+                        <div class="col-sm-10">
+                            <input name="{{ prefix ~ 'sort_order' }}"
+                                   id="input-sort-order"
+                                   class="form-control"
+                                   type="text"
+                                   value="{{ sort_order }}">
+                            <p class="help-block" style="margin-bottom: 0">
+                                {{ config_sort_order_desc }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h3 class="panel-title"><b>{{ text_credentials }}</b></h3>
+
+                    <div class="form-group required" style="border: none; margin-top:0;">
+                        <label class="col-sm-2 control-label" for="input-base-url">{{ config_api_host }}</label>
+                        <div class="col-sm-10">
+                            <input name="{{ prefix ~ 'api_host' }}"
+                                   id="input-base-url"
+                                   class="form-control"
+                                   type="text"
+                                   value="{{ api_host }}">
+                        </div>
+                    </div>
+                    <div class="form-group required" style="border: none; margin-top:0;">
+                        <label class="col-sm-2 control-label" for="input-http-user">{{ config_api_user }}</label>
+                        <div>{{ input[prefix ~ 'api_user'] }}</div>
+                        <div class="col-sm-10">
+                            <input name="{{ prefix ~ 'api_user' }}"
+                                   id="input-http-user"
+                                   class="form-control"
+                                   type="text"
+                                   value="{{ api_user }}">
+                        </div>
+                    </div>
+                    <div class="form-group required" style="border: none; margin-top:0;">
+                        <label class="col-sm-2 control-label" for="input-http-password">{{ config_api_password }}</label>
+                        <div class="col-sm-10">
+                            <input name="{{ prefix ~ 'api_password' }}"
+                                   id="input-http-password"
+                                   class="form-control"
+                                   type="text"
+                                   value="{{ api_password }}">
+                        </div>
+                    </div>
+
+                    {% for credit_card in credit_cards %}
+                        <hr>
+                        <h3 class="panel-title">
+                            <img src="/image/catalog/payment_gateway_cloud/cc/{{ credit_card.type }}.svg" style="height: 40px;margin-right: 10px" alt="{{ credit_card.name }}">
+                            <b>{{ credit_card.name }}</b>
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group required" style="border: none; margin-top:0;">
+                                    <label class="col-sm-2 col-md-4 control-label" for="input-status">{{ config_status }}</label>
+                                    <div class="col-sm-10 col-md-8">
+                                        <select name="{{ prefix ~ 'cc_status_' ~ credit_card.type }}" id="input-status" class="form-control">
+                                            {% if credit_card.status %}
+                                                <option value="1" selected="selected">{{ text_enabled }}</option>
+                                                <option value="0">{{ text_disabled }}</option>
+                                            {% else %}
+                                                <option value="1">{{ text_enabled }}</option>
+                                                <option value="0" selected="selected">{{ text_disabled }}</option>
+                                            {% endif %}
+                                        </select>
+                                        <p class="help-block" style="margin-bottom: 0">
+                                            {{ config_cc_status_desc }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="border: none; margin-top:0;">
+                                    <label class="col-sm-2 col-md-4 control-label" for="input-merchant-account-id">{{ config_cc_api_key }}</label>
+                                    <div class="col-sm-10 col-md-8">
+                                        <input name="{{ prefix ~ 'cc_api_key_' ~ credit_card.type }}"
+                                               id="input-merchant-account-id"
+                                               class="form-control"
+                                               type="text"
+                                               value="{{ credit_card.api_key }}">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="border: none; margin-top:0;">
+                                    <label class="col-sm-2 col-md-4 control-label" for="input-merchant-secret">{{ config_cc_api_secret }}</label>
+                                    <div class="col-sm-10 col-md-8">
+                                        <input name="{{ prefix ~ 'cc_api_secret_' ~ credit_card.type }}"
+                                               id="input-merchant-secret"
+                                               class="form-control"
+                                               type="text"
+                                               value="{{ credit_card.api_secret }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group" style="border: none; margin-top:0;">
+                                    <label class="col-sm-2 col-md-4 control-label" for="input-status">{{ config_cc_seamless }}</label>
+                                    <div class="col-sm-10 col-md-8">
+                                        <select name="{{ prefix ~ 'cc_seamless_' ~ credit_card.type }}" id="input-status" class="form-control">
+                                            {% if credit_card.seamless %}
+                                                <option value="1" selected="selected">{{ text_enabled }}</option>
+                                                <option value="0">{{ text_disabled }}</option>
+                                            {% else %}
+                                                <option value="1">{{ text_enabled }}</option>
+                                                <option value="0" selected="selected">{{ text_disabled }}</option>
+                                            {% endif %}
+                                        </select>
+                                        <p class="help-block" style="margin-bottom: 0">
+                                            {{ config_cc_seamless_desc }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="border: none; margin-top:0;">
+                                    <label class="col-sm-2 col-md-4 control-label" for="input-merchant-secret">{{ config_cc_integration_key }}</label>
+                                    <div class="col-sm-10 col-md-8">
+                                        <input name="{{ prefix ~ 'cc_integration_key_' ~ credit_card.type }}"
+                                               id="input-merchant-secret"
+                                               class="form-control"
+                                               type="text"
+                                               value="{{ credit_card.integration_key }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{ footer }}
