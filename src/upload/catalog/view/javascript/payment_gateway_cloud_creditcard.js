@@ -170,3 +170,8 @@ var paymentGatewayCloudSeamless = function () {
     };
 }();
 
+if ($('button[data-card-type]').length === 1) {
+    setTimeout(function () {
+        selectCard($('button[data-card-type]').first().data('cardType'));
+    }, 500);
+}

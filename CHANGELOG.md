@@ -1,9 +1,16 @@
 # Release Notes
 
+## Unreleased
+
+## v1.1.0 (2019-09-03)
+### Added
+- 3D Secure 2.0 extra data
+- Pre-select the only card option if only one present
+
 ## v1.0.0 (2019-08-30)
 ### Added
-- Build script and [readme](README.md) with instructions
-- [Changelog](CHANGELOG.md)
+- Build script and [README](README.md) with instructions
+- [CHANGELOG](CHANGELOG.md)
 ### Changed
 - Moved renamed source to `src`
 
