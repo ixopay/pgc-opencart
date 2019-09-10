@@ -92,8 +92,8 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
              */
             PaymentGatewayCloud\Client\Client::setApiUrl(rtrim($this->getConfig('api_host'), '/') . '/');
             $client = new PaymentGatewayCloud\Client\Client(
-                $this->getConfig('api_user'),
-                htmlspecialchars_decode($this->getConfig('api_password')),
+                $this->getConfig('cc_api_user_' . $cardType),
+                htmlspecialchars_decode($this->getConfig('cc_api_password_' . $cardType)),
                 $this->getConfig('cc_api_key_' . $cardType),
                 $this->getConfig('cc_api_secret_' . $cardType)
             );
@@ -164,8 +164,6 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
         }
 
         if ($paymentResult->hasErrors()) {
-
-            var_dump($paymentResult);
             $this->processFailure($this->order);
         }
 

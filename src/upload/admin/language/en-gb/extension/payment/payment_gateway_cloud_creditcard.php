@@ -19,10 +19,11 @@ $_['config_sort_order'] = 'Sort Order';
 $_['config_sort_order_desc'] = 'Order of payment methods as displayed on payment page.';
 
 $_['text_credentials'] = 'API Credentials';
-$_['config_api_host'] = 'Host';
-$_['config_api_user'] = 'User';
-$_['config_api_password'] = 'Password';
+$_['config_api_host'] = 'Gateway Host';
 
+$_['config_cc_title'] = 'Title';
+$_['config_cc_api_user'] = 'User';
+$_['config_cc_api_password'] = 'Password';
 $_['config_cc_status_desc'] = 'Activate card type to make it available for your consumers.<br>API Key and Secret have to be set to make the option appear during checkout.<br>If seamless is enabled Integration Key is required as well.';
 $_['config_cc_api_key'] = 'Key';
 $_['config_cc_api_secret'] = 'Secret';

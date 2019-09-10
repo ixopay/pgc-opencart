@@ -1,8 +1,8 @@
 <div class="buttons">
     {% for credit_card in credit_cards %}
         <button type="button" class="btn btn-secondary" data-card-type="{{ credit_card.type }}">
-            <img src="/image/catalog/payment_gateway_cloud/cc/{{ credit_card.type }}.svg" style="height: 28px;margin-right: 10px" alt="{{ credit_card.name }}">
-            {{ credit_card.name }}
+            <img src="/image/catalog/payment_gateway_cloud/cc/{{ credit_card.type }}.svg" style="height: 28px;margin-right: 10px" alt="{{ credit_card.title }}">
+            {{ credit_card.title }}
         </button>
     {% endfor %}
 </div>

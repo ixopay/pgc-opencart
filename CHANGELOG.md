@@ -1,6 +1,10 @@
 # Release Notes
 
-## Unreleased
+## v1.2.0 (2019-09-10)
+### Added
+- [README](README.md) note on enabling/disabling additional adapters and how to add language files
+### Changed
+- Display title, gateway API username & password configurable for individual adapters
 
 ## v1.1.0 (2019-09-03)
 ### Added
