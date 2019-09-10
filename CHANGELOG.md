@@ -1,6 +1,6 @@
 # Release Notes
 
-## Unreleased
+## v1.2.0 (2019-09-10)
 ### Added
 - [README](README.md) note on enabling/disabling additional adapters and how to add language files
 ### Changed
