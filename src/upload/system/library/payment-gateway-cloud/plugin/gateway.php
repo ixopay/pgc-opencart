@@ -9,17 +9,20 @@ trait PaymentGatewayCloudGateway
      */
     private function getCardTypes()
     {
+        /**
+         * Comment/disable adapters that are not applicable
+         */
         return [
             'cc' => 'Credit Card',
-            'visa' => 'Visa Credit Card',
-            'mastercard' => 'MasterCard Credit Card',
-            'amex' => 'Amex Credit Card',
-            'diners' => 'Diners Credit Card',
-            'jcb' => 'JCB Credit Card',
-            'discover' => 'Discover Credit Card',
-            'unionpay' => 'UnionPay Credit Card',
-            'maestro' => 'Maestro Credit Card',
-            // 'uatp' => 'UATP Credit Card',
+            'visa' => 'Visa',
+            'mastercard' => 'MasterCard',
+            'amex' => 'Amex',
+            'diners' => 'Diners',
+            'jcb' => 'JCB',
+            'discover' => 'Discover',
+            'unionpay' => 'UnionPay',
+            'maestro' => 'Maestro',
+            // 'uatp' => 'UATP',
         ];
     }
 
@@ -31,10 +34,14 @@ trait PaymentGatewayCloudGateway
         $cardTypes = $this->getCardTypes();
         $creditCards = [];
         foreach ($cardTypes as $cardType => $cardName) {
+            $title = $this->getConfig('cc_title_' . $cardType) ?: $cardName;
             $creditCards[$cardType] = [
                 'type' => $cardType,
                 'name' => $cardName,
                 'status' => $this->getConfig('cc_status_' . $cardType),
+                'title' => $title,
+                'api_user' => $this->getConfig('cc_api_user_' . $cardType),
+                'api_password' => $this->getConfig('cc_api_password_' . $cardType),
                 'api_key' => $this->getConfig('cc_api_key_' . $cardType),
                 'api_secret' => $this->getConfig('cc_api_secret_' . $cardType),
                 'integration_key' => $this->getConfig('cc_integration_key_' . $cardType),
@@ -64,6 +71,7 @@ trait PaymentGatewayCloudGateway
             $creditCardPublic = [
                 'type' => $creditCard['type'],
                 'name' => $creditCard['name'],
+                'title' => $creditCard['title'],
                 // 'viewUrl' => $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/creditCardView&cardType=' . $cardType),
             ];
             if (!empty($creditCard['seamless']) && !empty($creditCard['integration_key'])) {

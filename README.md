@@ -9,6 +9,8 @@
 
 * Clone or download the source from this repository.
 * Update images in [src/admin/view/image/payment_gateway_cloud](src/upload/admin/view/image/payment_gateway_cloud) and [src/image/catalog/payment_gateway_cloud](src/upload/image/catalog/payment_gateway_cloud).
+* Comment/disable adapters in `src/upload/system/library/payment-gateway-cloud/plugin/gateway.php` - see `getCardTypes()` method.
+* Copy language files from `src/upload/admin/language/en-gb` and `src/upload/catalog/language/en-gb` to additional languages folders (ISO 639-1) and update the translations within.
 * Run the build script to apply desired branding and create a zip file ready for distribution:
 ```shell script
 php build.php gateway.mypaymentprovider.com "My Payment Provider"

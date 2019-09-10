@@ -15,19 +15,14 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
 
     private $default = [
         'status' => 0,
-        'title' => 'Payment Gateway Cloud Credit Card',
+        'title' => 'Credit Card',
         'sort_order' => 1,
-
         'api_host' => '',
-        'api_password' => '',
-        'api_user' => '',
     ];
 
     private $config_fields = [
         'status',
         'api_host',
-        'api_user',
-        'api_password',
         'sort_order',
     ];
 
@@ -37,10 +32,7 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
 
     private $mandatory_fields = [
         'status',
-
         'api_host',
-        'api_user',
-        'api_password',
     ];
 
     private $language_fields = [
@@ -55,9 +47,9 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
 
         'text_credentials',
         'config_api_host',
-        'config_api_user',
-        'config_api_password',
-
+        'config_cc_title',
+        'config_cc_api_user',
+        'config_cc_api_password',
         'config_cc_api_key',
         'config_cc_api_secret',
         'config_cc_integration_key',
@@ -95,6 +87,7 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
         $creditCards = $this->getCreditCards();
         foreach ($creditCards as $creditCard) {
             $this->config_fields[] = 'cc_status_' . $creditCard['type'];
+            $this->config_fields[] = 'cc_title_' . $creditCard['type'];
             $this->config_fields[] = 'cc_api_key_' . $creditCard['type'];
             $this->config_fields[] = 'cc_api_secret_' . $creditCard['type'];
             $this->config_fields[] = 'cc_integration_key_' . $creditCard['type'];
