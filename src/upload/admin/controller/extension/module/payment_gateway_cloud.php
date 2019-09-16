@@ -1,5 +1,5 @@
 <?php
-include_once(DIR_SYSTEM . 'library/autoload.php');
+include_once(DIR_SYSTEM . 'library/payment-gateway-cloud/autoload.php');
 
 use PaymentGatewayCloud\PaymentGatewayCloudPlugin;
 
