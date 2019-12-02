@@ -1,5 +1,9 @@
 # Release Notes
 
+## Unreleased
+### Fixed
+- Gateway client PHP 7.3 compatibility: remove redundant filter_var FILTER_VALIDATE_URL flags
+
 ## v1.2.1 (2019-09-16)
 ### Fixed
 - Autoload import path in module controller
