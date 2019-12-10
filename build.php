@@ -56,6 +56,13 @@ if (empty($name)) {
     exit;
 }
 
+if (strlen($name) > 21) {
+    line();
+    error('Name must not be longer than 21 characters');
+    usage();
+    exit;
+}
+
 /**
  * validate domain input
  */
