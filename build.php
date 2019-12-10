@@ -2,7 +2,7 @@
 /**
  * extension source version
  */
-$version = '1.2.1';
+$version = '1.2.2';
 
 /**
  * dist filename
@@ -56,6 +56,13 @@ if (empty($name)) {
     exit;
 }
 
+if (strlen($name) > 21) {
+    line();
+    error('Name must not be longer than 21 characters');
+    usage();
+    exit;
+}
+
 /**
  * validate domain input
  */
@@ -71,7 +78,7 @@ if (empty($hostname)) {
  * the zip file's name without extension
  */
 $distFilename = $distFilenamePrefix . kebabCase($name) . '-' . $version . $distFilenameSuffix;
-line('    '.$distFilename);
+line('    ' . $distFilename);
 
 /**
  * relative path within zip file

@@ -1,5 +1,12 @@
 # Release Notes
 
+## Unreleased
+
+## v1.2.2 (2019-12-10)
+### Fixed
+- Gateway client PHP 7.3 compatibility: remove redundant filter_var FILTER_VALIDATE_URL flags
+- Limit build script plugin name parameter to 21 characters
+
 ## v1.2.1 (2019-09-16)
 ### Fixed
 - Autoload import path in module controller
