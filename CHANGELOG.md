@@ -1,6 +1,8 @@
 # Release Notes
 
 ## Unreleased
+### Added
+- Preauthorize/Capture/Void
 
 ## v1.2.2 (2019-12-10)
 ### Fixed

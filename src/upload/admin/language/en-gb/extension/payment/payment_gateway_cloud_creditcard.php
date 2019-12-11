@@ -30,5 +30,8 @@ $_['config_cc_api_secret'] = 'Secret';
 $_['config_cc_integration_key'] = 'Integration Key';
 $_['config_cc_seamless'] = 'Seamless';
 $_['config_cc_seamless_desc'] = 'Use seamless form instead of redirects.';
+$_['config_cc_method'] = 'Method';
+$_['config_cc_method_debit'] = 'Debit';
+$_['config_cc_method_preauthorize'] = 'Preauthorize';
 
 $_['text_success'] = 'Your modifications are saved!';

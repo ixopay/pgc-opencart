@@ -2,22 +2,36 @@
 
 include_once(DIR_SYSTEM . 'library/payment-gateway-cloud/autoload.php');
 
+use PaymentGatewayCloud\Client\Callback\Result;
 use PaymentGatewayCloud\Client\Data\Customer;
 use PaymentGatewayCloud\Client\Transaction\Debit;
+use PaymentGatewayCloud\Client\Transaction\Preauthorize;
 use PaymentGatewayCloud\Client\Transaction\Result as TransactionResult;
 use PaymentGatewayCloud\PaymentGatewayCloudGateway;
+use PaymentGatewayCloud\PaymentGatewayCloudPlugin;
 
 final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Controller
 {
     use PaymentGatewayCloudGateway;
 
+    /**
+     * Default OpenCart order status
+     * TODO: read those from db by language 1 (en)
+     */
     const PENDING = 1;
     const PROCESSING = 2;
+    const SHIPPED = 3;
+    const COMPLETE = 5;
     const CANCELED = 7;
+    const DENIED = 8;
+    const CANCELED_REVERSAL = 9;
     const FAILED = 10;
     const REFUNDED = 11;
     const REVERSED = 12;
+    const CHARGEBACK = 13;
+    const EXPIRED = 14;
     const PROCESSED = 15;
+    const VOIDED = 16;
 
     private $type = 'creditcard';
 
@@ -90,13 +104,7 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
             /**
              * gateway client
              */
-            PaymentGatewayCloud\Client\Client::setApiUrl(rtrim($this->getConfig('api_host'), '/') . '/');
-            $client = new PaymentGatewayCloud\Client\Client(
-                $this->getConfig('cc_api_user_' . $cardType),
-                htmlspecialchars_decode($this->getConfig('cc_api_password_' . $cardType)),
-                $this->getConfig('cc_api_key_' . $cardType),
-                $this->getConfig('cc_api_secret_' . $cardType)
-            );
+            $client = $this->client($cardType);
 
             /**
              * gateway customer
@@ -134,18 +142,29 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
             }
 
             /**
-             * debit
+             * transaction
              */
-            $debit = new Debit();
-            $debit->setTransactionId($this->session->data['order_id'])
+            $transactionRequest = $this->getConfig('cc_method_' . $cardType);
+            $transaction = null;
+            switch ($transactionRequest) {
+                case PaymentGatewayCloudPlugin::METHOD_PREAUTHORIZE:
+                    $transaction = new Preauthorize();
+                    break;
+                case PaymentGatewayCloudPlugin::METHOD_DEBIT:
+                default:
+                    $transaction = new Debit();
+                    break;
+            }
+
+            $transaction->setTransactionId($this->session->data['order_id'])
                 ->setAmount(number_format(round($this->order['total'], 2), 2, '.', ''))
                 ->setCurrency($this->order['currency_code'])
                 ->setCustomer($customer)
                 ->setExtraData($this->extraData3DS())
-                ->setSuccessUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/response', ['orderId' => $orderId, 'success' => 1])))
+                ->setCallbackUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/callback', ['orderId' => $orderId, 'cardType' . $cardType])))
                 ->setCancelUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/response', ['orderId' => $orderId, 'cancelled' => 1])))
                 ->setErrorUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/response', ['orderId' => $orderId, 'failed' => 1])))
-                ->setCallbackUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/callback', 'orderId=' . $orderId, '&cardType=' . $cardType)));
+                ->setSuccessUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/response', ['orderId' => $orderId, 'success' => 1])));
 
             /**
              * token
@@ -155,46 +174,87 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
                 if (empty($token)) {
                     die('empty token');
                 }
-                $debit->setTransactionToken($token);
+                $transaction->setTransactionToken($token);
             }
 
-            $paymentResult = $client->debit($debit);
+            /**
+             * transaction
+             */
+            switch ($transactionRequest) {
+                case PaymentGatewayCloudPlugin::METHOD_PREAUTHORIZE:
+                    $paymentResult = $client->preauthorize($transaction);
+                    break;
+                case PaymentGatewayCloudPlugin::METHOD_DEBIT:
+                default:
+                    $paymentResult = $client->debit($transaction);
+                    break;
+            }
         } catch (\Throwable $e) {
             $this->processFailure($this->order);
         }
 
         if ($paymentResult->hasErrors()) {
-            $this->processFailure($this->order);
+            $this->processFailure($this->order, $paymentResult->getFirstError());
         }
 
         if ($paymentResult->isSuccess()) {
-            $gatewayReferenceId = $paymentResult->getReferenceId();
-            if ($paymentResult->getReturnType() == TransactionResult::RETURN_TYPE_ERROR) {
-                $errors = $paymentResult->getErrors();
-                $this->processFailure($this->order);
-            } elseif ($paymentResult->getReturnType() == TransactionResult::RETURN_TYPE_REDIRECT) {
-                $this->response->redirect($paymentResult->getRedirectUrl());
-            } elseif ($paymentResult->getReturnType() == TransactionResult::RETURN_TYPE_PENDING) {
-                // payment is pending, wait for callback to complete
-            } elseif ($paymentResult->getReturnType() == TransactionResult::RETURN_TYPE_FINISHED) {
-                // seamless will finish here
-                $this->model_checkout_order->addOrderHistory($orderId, self::PROCESSING, '', false);
-                $this->response->redirect($this->url->link('checkout/success'));
-                return;
+            // $gatewayReferenceId = $paymentResult->getReferenceId();
+            switch ($paymentResult->getReturnType()) {
+                case TransactionResult::RETURN_TYPE_ERROR:
+                    $this->processFailure($this->order, $paymentResult->getFirstError());
+                    break;
+                case TransactionResult::RETURN_TYPE_REDIRECT:
+                    /**
+                     * hosted payment page or seamless+3DS
+                     */
+                    $this->response->redirect($paymentResult->getRedirectUrl());
+                    break;
+                case TransactionResult::RETURN_TYPE_PENDING:
+                    /**
+                     * payment is pending, wait for callback to complete
+                     */
+                    break;
+                case TransactionResult::RETURN_TYPE_FINISHED:
+                    /**
+                     * seamless will finish here ONLY FOR NON-3DS SEAMLESS
+                     */
+                    break;
             }
+            $this->response->redirect($this->url->link('checkout/success'));
         }
 
-        // nothing happened - go back
-        $this->response->redirect($this->url->link('checkout/checkout'));
+        /**
+         * something went wrong
+         */
+        $this->processFailure($this->order);
     }
 
-    private function processFailure($order)
+    private function processFailure($order, $errors = null)
     {
         if ($order['order_status_id'] == self::PENDING) {
             $this->model_checkout_order->addOrderHistory($order['order_id'], self::FAILED);
             $this->session->data['error'] = $this->language->get('order_error');
+            if (!empty($errors)) {
+                $this->session->data['error'] = $errors;
+            }
             $this->response->redirect($this->url->link('checkout/checkout'));
         }
+    }
+
+    /**
+     * @param string $cardType
+     * @throws \PaymentGatewayCloud\Client\Exception\InvalidValueException
+     * @return \PaymentGatewayCloud\Client\Client
+     */
+    private function client($cardType)
+    {
+        PaymentGatewayCloud\Client\Client::setApiUrl(rtrim($this->getConfig('api_host'), '/') . '/');
+        return new PaymentGatewayCloud\Client\Client(
+            $this->getConfig('cc_api_user_' . $cardType),
+            htmlspecialchars_decode($this->getConfig('cc_api_password_' . $cardType)),
+            $this->getConfig('cc_api_key_' . $cardType),
+            $this->getConfig('cc_api_secret_' . $cardType)
+        );
     }
 
     public function response()
@@ -213,20 +273,20 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
         $cancelled = !empty($_REQUEST['cancelled']);
         if ($cancelled) {
             $this->session->data['error'] = $this->language->get('order_cancelled');
-            $this->model_checkout_order->addOrderHistory($orderId, self::CANCELED, '', false);
+            $this->updateOrderStatus($orderId, self::CANCELED);
             $this->response->redirect($this->url->link('checkout/checkout'));
             return;
         }
 
         $success = !empty($_REQUEST['success']);
         if ($success) {
-            $this->model_checkout_order->addOrderHistory($orderId, self::PROCESSING, '', false);
+            $this->updateOrderStatus($orderId, self::PROCESSING);
             $this->response->redirect($this->url->link('checkout/success'));
             return;
         }
 
         $this->session->data['error'] = $this->language->get('order_error');
-        $this->model_checkout_order->addOrderHistory($orderId, self::FAILED, '', false);
+        $this->updateOrderStatus($orderId, self::FAILED);
         $this->response->redirect($this->url->link('checkout/checkout'));
     }
 
@@ -235,44 +295,77 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
         $this->load->model('checkout/order');
         $this->load->language('extension/payment/payment_gateway_cloud');
 
-        $notification = file_get_contents('php://input');
+        $cardType = $_REQUEST['cardType'];
 
-        // $cardType = !empty($_REQUEST['cardType']) ? $_REQUEST['cardType'] : null;
-        // $apiUser = $this->getConfig('api_user');
-        // $apiPassword = htmlspecialchars_decode($this->getConfig('api_password'));
-        // $apiKey = $this->getConfig('cc_api_key_' . $cardType);
-        // $apiSecret = $this->getConfig('cc_api_secret_' . $cardType);
-        // $client = new Client($apiUser, $apiPassword, $apiKey, $apiSecret);
-        //
-        // if (empty($_SERVER['HTTP_DATE']) || empty($_SERVER['HTTP_AUTHORIZATION']) ||
-        //     $client->validateCallback($notification, $_SERVER['QUERY_STRING'], $_SERVER['HTTP_DATE'], $_SERVER['HTTP_AUTHORIZATION'])
-        // ) {
-        //     die('invalid callback');
+        $client = $this->client($cardType);
+
+        // if (!$client->validateCallbackWithGlobals()) {
+        //     if (!headers_sent()) {
+        //         http_response_code(400);
+        //     }
+        //     die("OK");
         // }
 
-        $xml = simplexml_load_string($notification);
-        $data = json_decode(json_encode($xml), true);
+        $callbackResult = $client->readCallback(file_get_contents('php://input'));
 
-        $orderId = $data['transactionId'];
+        $orderId = $callbackResult->getTransactionId();
 
-        if ($data['result'] !== 'OK') {
-            $this->model_checkout_order->addOrderHistory($orderId, self::FAILED);
-            die('OK');
+        /**
+         * Map result's transaction type to internal order status
+         */
+        $orderStatus = null;
+        $orderHistoryComments = [];
+        $notifyCustomer = false;
+        switch ($callbackResult->getTransactionType()) {
+            case Result::TYPE_DEBIT:
+            case Result::TYPE_CAPTURE:
+                $orderStatus = self::PROCESSED;
+                break;
+            case Result::TYPE_VOID:
+                $orderStatus = self::VOIDED;
+                break;
+            case Result::TYPE_PREAUTHORIZE:
+                $orderStatus = self::PROCESSING;
+                /**
+                 * Add 'Awaiting capture/void' to order history comment
+                 */
+                $orderHistoryComments[] = $this->language->get('order_on_hold');
+                break;
+            // case Result::TYPE_CHARGEBACK:
+            //     $orderStatus = self::CHARGEBACK;
+            //     break;
+            // case Result::TYPE_CHARGEBACK_REVERSAL:
+            //     $orderStatus = self::REVERSED;
+            //     break;
+            // case Result::TYPE_REFUND:
+            //     $orderStatus = self::REFUNDED;
+            //     break;
         }
 
-        switch ($data['transactionType']) {
-            case 'CHARGEBACK-REVERSAL':
-                $this->model_checkout_order->addOrderHistory($orderId, self::REVERSED);
-                break;
-            case 'CHARGEBACK':
-                $this->model_checkout_order->addOrderHistory($orderId, self::REFUNDED);
-                break;
-            case 'DEBIT':
-                $this->model_checkout_order->addOrderHistory($orderId, self::PROCESSED);
-                break;
+        /**
+         * Override status if it's an error result, reset comments
+         */
+        if ($callbackResult->getResult() == Result::RESULT_ERROR) {
+            $orderStatus = self::FAILED;
+            $orderHistoryComments = [];
         }
 
-        die('OK');
+        /**
+         * Add additional metadata to order history comment
+         */
+        $orderHistoryComments[] = 'Callback Result: ' . $callbackResult->getResult();
+        $orderHistoryComments[] = 'TX Type: ' . $callbackResult->getTransactionType();
+        $orderHistoryComments[] = 'CC Type: ' . $callbackResult->getReturnData()->toArray()['type'] ?? 'unknown';
+        $orderHistoryComments[] = 'CC Digits: ' . $callbackResult->getReturnData()->toArray()['lastFourDigits'] ?? 'unknown';
+
+        $this->updateOrderStatus($orderId, $orderStatus, $orderHistoryComments, $notifyCustomer);
+
+        die("OK");
+    }
+
+    private function updateOrderStatus($orderId, $orderStatus, $orderHistoryComments = [], $notifyCustomer = false)
+    {
+        $this->model_checkout_order->addOrderHistory($orderId, $orderStatus, implode("\n", $orderHistoryComments), $notifyCustomer);
     }
 
     /**
@@ -294,6 +387,11 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
             // 3ds:browserScreenWidth
             // 3ds:browserTimezone
             // 3ds:browserUserAgent
+
+            /**
+             * force 3ds flow
+             */
+            // '3dsecure' => 'mandatory',
 
             /**
              * Additional 3ds 2.0 data

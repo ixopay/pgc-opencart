@@ -53,6 +53,7 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
         'config_cc_api_key',
         'config_cc_api_secret',
         'config_cc_integration_key',
+        'config_cc_method',
     ];
 
     public function index()
@@ -92,9 +93,16 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
             $this->config_fields[] = 'cc_api_secret_' . $creditCard['type'];
             $this->config_fields[] = 'cc_integration_key_' . $creditCard['type'];
             $this->config_fields[] = 'cc_seamless_' . $creditCard['type'];
+            $this->config_fields[] = 'cc_method_' . $creditCard['type'];
             $this->mandatory_fields[] = 'cc_status_' . $creditCard['type'];
         }
         $data['credit_cards'] = $creditCards;
+
+        $methods = $this->getMethods();
+        $data['methods'] = [];
+        foreach ($methods as $method) {
+            $data['methods'][$method] = $this->language->get('config_cc_method_' . $method);
+        }
 
         $plugin = new PaymentGatewayCloudPlugin();
         $data = array_merge(
