@@ -29,6 +29,17 @@ trait PaymentGatewayCloudGateway
     /**
      * @return array
      */
+    private function getMethods()
+    {
+        return [
+            PaymentGatewayCloudPlugin::METHOD_DEBIT,
+            PaymentGatewayCloudPlugin::METHOD_PREAUTHORIZE,
+        ];
+    }
+
+    /**
+     * @return array
+     */
     private function getCreditCards()
     {
         $cardTypes = $this->getCardTypes();
@@ -46,6 +57,7 @@ trait PaymentGatewayCloudGateway
                 'api_secret' => $this->getConfig('cc_api_secret_' . $cardType),
                 'integration_key' => $this->getConfig('cc_integration_key_' . $cardType),
                 'seamless' => $this->getConfig('cc_seamless_' . $cardType),
+                'method' => $this->getConfig('cc_method_' . $cardType),
             ];
         }
         return $creditCards;

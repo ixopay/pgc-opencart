@@ -4,6 +4,9 @@ namespace PaymentGatewayCloud;
 
 final class PaymentGatewayCloudPlugin
 {
+    const METHOD_DEBIT = 'debit';
+    const METHOD_PREAUTHORIZE = 'preauthorize';
+
     public function getVersion()
     {
         return 'X.Y.Z';
