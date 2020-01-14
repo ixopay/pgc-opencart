@@ -1,6 +1,8 @@
 # Release Notes
 
 ## Unreleased
+
+## v1.3.0 (2020-01-14)
 ### Added
 - Preauthorize/Capture/Void
 ### Changed
