@@ -156,7 +156,7 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
                     break;
             }
 
-            $transaction->setTransactionId($this->session->data['order_id'])
+            $transaction->setTransactionId($this->encodeOrderId($this->session->data['order_id']))
                 ->setAmount(number_format(round($this->order['total'], 2), 2, '.', ''))
                 ->setCurrency($this->order['currency_code'])
                 ->setCustomer($customer)
@@ -257,6 +257,33 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
         );
     }
 
+    private function encodeOrderId($orderId)
+    {
+        return $orderId . '-' . date('YmdHis') . substr(sha1(uniqid()), 0, 10);
+    }
+
+    private function decodeOrderId($orderId)
+    {
+        if (strpos($orderId, '-') === false) {
+            return $orderId;
+        }
+
+        $orderIdParts = explode('-', $orderId);
+
+        if(count($orderIdParts) === 2) {
+            $orderId = $orderIdParts[0];
+        }
+
+        /**
+         * void/capture will prefix the transaction id
+         */
+        if(count($orderIdParts) === 3) {
+            $orderId = $orderIdParts[1];
+        }
+
+        return $orderId;
+    }
+
     public function response()
     {
         $this->load->model('checkout/order');
@@ -308,7 +335,7 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
 
         $callbackResult = $client->readCallback(file_get_contents('php://input'));
 
-        $orderId = $callbackResult->getTransactionId();
+        $orderId = $this->decodeOrderId($callbackResult->getTransactionId());
 
         /**
          * Map result's transaction type to internal order status

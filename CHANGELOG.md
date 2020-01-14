@@ -3,6 +3,8 @@
 ## Unreleased
 ### Added
 - Preauthorize/Capture/Void
+### Changed
+- Order ID suffix to prevent TX ID conflicts
 
 ## v1.2.2 (2019-12-10)
 ### Fixed
