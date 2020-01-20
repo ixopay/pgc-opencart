@@ -1,6 +1,8 @@
 # Release Notes
 
 ## Unreleased
+
+## v1.3.1 (2020-01-20)
 ### Fixed
 - Postback callback URL card type assignment
 
