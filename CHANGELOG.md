@@ -1,6 +1,12 @@
 # Release Notes
 
 ## Unreleased
+
+## v1.3.1 (2020-01-20)
+### Fixed
+- Postback callback URL card type assignment
+
+## v1.3.0 (2020-01-14)
 ### Added
 - Preauthorize/Capture/Void
 ### Changed
