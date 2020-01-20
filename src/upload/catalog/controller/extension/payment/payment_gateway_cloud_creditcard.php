@@ -161,7 +161,7 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
                 ->setCurrency($this->order['currency_code'])
                 ->setCustomer($customer)
                 ->setExtraData($this->extraData3DS())
-                ->setCallbackUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/callback', ['orderId' => $orderId, 'cardType' . $cardType])))
+                ->setCallbackUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/callback', ['orderId' => $orderId, 'cardType' => $cardType])))
                 ->setCancelUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/response', ['orderId' => $orderId, 'cancelled' => 1])))
                 ->setErrorUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/response', ['orderId' => $orderId, 'failed' => 1])))
                 ->setSuccessUrl(str_replace('&amp;', '&', $this->url->link('extension/payment/payment_gateway_cloud_' . $this->type . '/response', ['orderId' => $orderId, 'success' => 1])));
