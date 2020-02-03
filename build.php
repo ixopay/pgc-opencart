@@ -93,6 +93,10 @@ $replacementMap = [
     'X.Y.Z' => $version,
     // "gateway.paymentgateway.cloud" -> "gateway.myprovider.com" (client xml namespace and endpoints)
     'gateway.paymentgateway.cloud' => $hostname,
+    // "sandbox.paymentgateway.cloud" -> "sandbox.myprovider.com" (client xml namespace and endpoints)
+    'sandbox.paymentgateway.cloud' => $hostname,
+    // "github.com/ixopay/pgc-opencart" -> "github.com/user/repo" (client xml namespace and endpoints)
+    'github.com/ixopay/pgc-opencart' => "github.com/user/repo",
     // "Payment Gateway Cloud" -> "My Provider"
     $placeholderName => $name,
     // "PaymentGatewayCloud" -> "MyProvider" (namespaces and other identifiers)
