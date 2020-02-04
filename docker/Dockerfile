@@ -69,6 +69,7 @@ ENV ALLOW_EMPTY_PASSWORD="no" \
 
 RUN apt-get update && apt-get install -y \
   git \
+  unzip \
   && apt-get autoclean
 
 COPY start.sh /start.sh

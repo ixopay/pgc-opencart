@@ -35,7 +35,7 @@ To test a build you generated via build.php run the following command from the p
 ```bash
  php build.php sandbox.paymentgateway.cloud "My Payment Provider"
  BITNAMI_IMAGE_VERSION="latest" \
- BUILD_ARTIFACT="${PWD}/dist/opencart-my-payment-provider-1.7.1.zip" \
+ BUILD_ARTIFACT="${PWD}/dist/opencart-my-payment-provider-1.3.1.ocmod.zip" \
  OPENCART_HOST="localhost" \
  OPENCART_USERNAME="dev" \
  OPENCART_PASSWORD="dev" \
@@ -57,9 +57,6 @@ Defaults for the Docker build are configured in the `docker-compose` files. You 
 ### Platform credentials
 
 To successfully test a payment flow you will need merchant credentials for the payment platform and set them via the following environment variables:
-
-> These Options are ignored when using an pre-generated zip-file!
-> Please Configure the Payment-Settings via the Admin-Interface (e.g.: https://localhost/admin)
 
 ```bash
  # Base url for payment plaform API
