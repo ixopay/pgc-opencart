@@ -20,6 +20,10 @@ php build.php gateway.mypaymentprovider.com "My Payment Provider"
 - Test by installing the extension in an existing shop installation (see [src/readme.txt](src/readme.txt)).
 - Distribute the versioned zip file.
 
+## Docker
+
+We supply ready to use Docker environments for development & testing. Please take a look at the supplied [docker](docker) directory for instructions.
+
 ## Provide Updates
 
 - Fetch the updated source from this repository (see [CHANGELOG.md](CHANGELOG.md)).<br>Note: make sure to not overwrite any previous changes you've made for the previous version, or re-apply these changes.

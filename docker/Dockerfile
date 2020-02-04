@@ -4,6 +4,7 @@ EXPOSE 80
 
 VOLUME /bitnami
 VOLUME /source
+VOLUME /dist
 
 ENV ALLOW_EMPTY_PASSWORD="no" \
     BITNAMI_APP_NAME="opencart" \

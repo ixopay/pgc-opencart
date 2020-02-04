@@ -3,6 +3,10 @@
 
 echo -e "Starting Opencart"
 
+if [ ! $PRECONFIGURE ]; then
+    find /opt -name "config.php" -exec sed -i "s#https://#http://#g" {} \;
+fi
+
 /app-entrypoint.sh nami start --foreground apache &
 
 if [ ! -f "/setup_complete" ]; then
@@ -11,35 +15,55 @@ if [ ! -f "/setup_complete" ]; then
 
     while [ ! -f "/bitnami/opencart/.initialized" ]; do sleep 2s; done
 
+    find /opt -name "config.php" -exec sed -i "s#https://#http://#g" {} \;
+
     while (! $(curl --silent http://localhost:80 | grep "Your Store" > /dev/null)); do sleep 2s; done
 
     echo -e "Installing PGC Extension"
 
-    # Emulate Zip installation
-    if [ ! -d "/source/.git" ] && [ ! -f  "/source/.git" ]; then
-        if [ ! -f "/paymentgatewaycloud.zip" ]; then
-            # Checkout and Package github code
-            echo -e "Checking out branch ${BRANCH} from ${REPOSITORY}"
-            git clone $REPOSITORY /tmp/paymentgatewaycloud
-            cd /tmp/paymentgatewaycloud
-            git checkout $BRANCH
-            # Copy Files
-            cp -rf src/upload/admin/* /opt/bitnami/opencart/admin/
-            cp -rf src/upload/catalog/* /opt/bitnami/opencart/catalog/
-            cp -rf src/upload/image/catalog/payment_gateway_cloud /opt/bitnami/opencart/image/catalog/
-            cp -rf src/upload/system/library/payment-gateway-cloud /opt/bitnami/opencart/system/library/
+    if [ "${BUILD_ARTIFACT}" != "undefined" ]; then
+        if [ -f /dist/paymentgatewaycloud.zip ]; then
+            echo -e "Using Supplied zip ${BUILD_ARTIFACT}"
+            mkdir /tmp/source
+            unzip /dist/paymentgatewaycloud.zip -d /tmp/source
+            ls -al1 /tmp/source/
+            cp -rf /tmp/source/upload/admin/* /opt/bitnami/opencart/admin/
+            cp -rf /tmp/source/upload/catalog/* /opt/bitnami/opencart/catalog/
+            cp -rf /tmp/source/upload/image/catalog/payment_gateway_cloud /opt/bitnami/opencart/image/catalog/
+            cp -rf /tmp/source/upload/system/library/payment-gateway-cloud /opt/bitnami/opencart/system/library/
             # Tell Opencart about the extension
-            OC_EXT_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_install\`  (extension_download_id, filename, date_added) VALUES (0,'opencart-payment-gateway-cloud-github-${BRANCH}',NOW()); SELECT LAST_INSERT_ID();" | tail -n1)
+            OC_EXT_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_install\`  (extension_download_id, filename, date_added) VALUES (0,'opencart-payment-gateway-cloud-local-zip',NOW()); SELECT LAST_INSERT_ID();" | tail -n1)
+        else
+            echo "Faled to build!, there is no such file: ${BUILD_ARTIFACT}"
+            exit 1
         fi
     else
-        # Copy Files
-        echo -e "Deploying development Source!"
-        cp -rf /source/src/upload/admin/* /opt/bitnami/opencart/admin/
-        cp -rf /source/src/upload/catalog/* /opt/bitnami/opencart/catalog/
-        cp -rf /source/src/upload/image/catalog/payment_gateway_cloud /opt/bitnami/opencart/image/catalog/
-        cp -rf /source/src/upload/system/library/payment-gateway-cloud /opt/bitnami/opencart/system/library/
-        # Tell Opencart about the extension
-        OC_EXT_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_install\`  (extension_download_id, filename, date_added) VALUES (0,'opencart-payment-gateway-cloud-local-dev',NOW()); SELECT LAST_INSERT_ID();" | tail -n1)
+        # Emulate Zip installation
+        if [ ! -d "/source/.git" ] && [ ! -f  "/source/.git" ]; then
+            if [ ! -f "/paymentgatewaycloud.zip" ]; then
+                # Checkout and Package github code
+                echo -e "Checking out branch ${BRANCH} from ${REPOSITORY}"
+                git clone $REPOSITORY /tmp/paymentgatewaycloud
+                cd /tmp/paymentgatewaycloud
+                git checkout $BRANCH
+                # Copy Files
+                cp -rf src/upload/admin/* /opt/bitnami/opencart/admin/
+                cp -rf src/upload/catalog/* /opt/bitnami/opencart/catalog/
+                cp -rf src/upload/image/catalog/payment_gateway_cloud /opt/bitnami/opencart/image/catalog/
+                cp -rf src/upload/system/library/payment-gateway-cloud /opt/bitnami/opencart/system/library/
+                # Tell Opencart about the extension
+                OC_EXT_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_install\`  (extension_download_id, filename, date_added) VALUES (0,'opencart-payment-gateway-cloud-github-${BRANCH}',NOW()); SELECT LAST_INSERT_ID();" | tail -n1)
+            fi
+        else
+            # Copy Files
+            echo -e "Deploying development Source!"
+            cp -rf /source/src/upload/admin/* /opt/bitnami/opencart/admin/
+            cp -rf /source/src/upload/catalog/* /opt/bitnami/opencart/catalog/
+            cp -rf /source/src/upload/image/catalog/payment_gateway_cloud /opt/bitnami/opencart/image/catalog/
+            cp -rf /source/src/upload/system/library/payment-gateway-cloud /opt/bitnami/opencart/system/library/
+            # Tell Opencart about the extension
+            OC_EXT_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_install\`  (extension_download_id, filename, date_added) VALUES (0,'opencart-payment-gateway-cloud-local-dev',NOW()); SELECT LAST_INSERT_ID();" | tail -n1)
+        fi
     fi
 
     # Add all Extension files to Opencart DB
@@ -155,7 +179,7 @@ if [ ! -f "/setup_complete" ]; then
     mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'payment_payment_gateway_cloud_creditcard', \`key\` = 'payment_payment_gateway_cloud_creditcard_cc_seamless_maestro', \`value\` = '${SHOP_PGC_CC_MAESTRO_SEAMLESS}', serialized = '0';"
     mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'payment_payment_gateway_cloud_creditcard', \`key\` = 'payment_payment_gateway_cloud_creditcard_cc_integration_key_maestro', \`value\` = '${SHOP_PGC_INTEGRATION_KEY}', serialized = '0';"
 
-    echo -e "Setup Complete"
+    echo -e "Setup Complete! You can access the instance at: http://${OPENCART_HOST}"
 
     touch /setup_complete
 
@@ -180,6 +204,7 @@ if [ ! -f "/setup_complete" ]; then
         chmod -R 777 /opt/bitnami/storage/
         chmod -R 777 /opt/bitnami/opencart/system/storage
         sed -i "s#'/bitnami#'/opt/bitnami#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php
+        sed -i "s#https://#http://#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php
         sed -i "s#define('DIR_STORAGE', '/opt/bitnami/opencart/system/storage/');#define('DIR_STORAGE', '/opt/bitnami/storage/');#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php
 
         kill 1
