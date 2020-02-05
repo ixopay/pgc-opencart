@@ -91,3 +91,4 @@ Additional platform specific settings:
  SHOP_PGC_CC_TYPE_MASTERCARD="debit"
  SHOP_PGC_CC_TYPE_UNIOPNPAY="debit"
  SHOP_PGC_CC_TYPE_VISA="debit"
+ ```
