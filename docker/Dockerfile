@@ -41,7 +41,7 @@ ENV PRECONFIGURE="" \
     SHOP_PGC_CC_VISA_MODE="debit" \
     SHOP_PGC_CC_VISA_SEAMLESS="0"
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
   git \
   unzip \
   && apt-get autoclean
