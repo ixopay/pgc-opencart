@@ -297,20 +297,17 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
         $cancelled = !empty($_REQUEST['cancelled']);
         if ($cancelled) {
             $this->session->data['error'] = $this->language->get('order_cancelled');
-            $this->updateOrderStatus($orderId, self::CANCELED);
             $this->response->redirect($this->url->link('checkout/checkout'));
             return;
         }
 
         $success = !empty($_REQUEST['success']);
         if ($success) {
-            $this->updateOrderStatus($orderId, self::PROCESSING);
             $this->response->redirect($this->url->link('checkout/success'));
             return;
         }
 
         $this->session->data['error'] = $this->language->get('order_error');
-        $this->updateOrderStatus($orderId, self::FAILED);
         $this->response->redirect($this->url->link('checkout/checkout'));
     }
 

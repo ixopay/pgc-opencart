@@ -2,6 +2,7 @@
 
 ## Unreleased
 ### Changed
+- Remove order status changes from gateway response handling - handled in callback
 - Remove superfluous payment gateway response error output
 ### Fixed
 - Missing cc input overflow obfuscating border
