@@ -9,7 +9,7 @@ $_['loading_text'] = 'Payment form is loading.';
 
 $_['card_holder'] = 'Card Holder';
 $_['card_number'] = 'Card Number';
-$_['card_ccv'] = 'CCV';
+$_['card_cvv'] = 'CVV';
 $_['card_expiry_month'] = 'Expiry Month';
 $_['card_expiry_year'] = 'Expiry Year';
 

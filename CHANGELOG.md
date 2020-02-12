@@ -3,6 +3,7 @@
 ## Unreleased
 ### Fixed
 - Missing cc input overflow obfuscating border
+- CCV -> CVV typo  
 
 ## v1.3.1 (2020-01-20)
 ### Fixed
