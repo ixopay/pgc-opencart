@@ -1,6 +1,8 @@
 # Release Notes
 
 ## Unreleased
+
+## v1.4.0 (2020-02-12)
 ### Added
 - Gateway callback validation
 ### Changed
