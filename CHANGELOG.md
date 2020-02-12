@@ -1,6 +1,8 @@
 # Release Notes
 
 ## Unreleased
+### Added
+- Gateway callback validation
 ### Changed
 - Remove order status changes from gateway response handling - handled in callback
 - Remove superfluous payment gateway response error output
