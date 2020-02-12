@@ -1,6 +1,8 @@
 # Release Notes
 
 ## Unreleased
+### Changed
+- Remove superfluous payment gateway response error output
 ### Fixed
 - Missing cc input overflow obfuscating border
 - CCV -> CVV typo  
