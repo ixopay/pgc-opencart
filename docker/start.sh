@@ -1,5 +1,6 @@
 #!/bin/bash
 # set -x
+set -euo pipefail
 
 echo -e "Starting Opencart"
 
