@@ -194,14 +194,14 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
         }
 
         if ($paymentResult->hasErrors()) {
-            $this->processFailure($this->order, $paymentResult->getFirstError());
+            $this->processFailure($this->order);
         }
 
         if ($paymentResult->isSuccess()) {
             // $gatewayReferenceId = $paymentResult->getReferenceId();
             switch ($paymentResult->getReturnType()) {
                 case TransactionResult::RETURN_TYPE_ERROR:
-                    $this->processFailure($this->order, $paymentResult->getFirstError());
+                    $this->processFailure($this->order);
                     break;
                 case TransactionResult::RETURN_TYPE_REDIRECT:
                     /**
@@ -229,14 +229,11 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
         $this->processFailure($this->order);
     }
 
-    private function processFailure($order, $errors = null)
+    private function processFailure($order)
     {
         if ($order['order_status_id'] == self::PENDING) {
             $this->model_checkout_order->addOrderHistory($order['order_id'], self::FAILED);
             $this->session->data['error'] = $this->language->get('order_error');
-            if (!empty($errors)) {
-                $this->session->data['error'] = $errors;
-            }
             $this->response->redirect($this->url->link('checkout/checkout'));
         }
     }
@@ -300,20 +297,17 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
         $cancelled = !empty($_REQUEST['cancelled']);
         if ($cancelled) {
             $this->session->data['error'] = $this->language->get('order_cancelled');
-            $this->updateOrderStatus($orderId, self::CANCELED);
             $this->response->redirect($this->url->link('checkout/checkout'));
             return;
         }
 
         $success = !empty($_REQUEST['success']);
         if ($success) {
-            $this->updateOrderStatus($orderId, self::PROCESSING);
             $this->response->redirect($this->url->link('checkout/success'));
             return;
         }
 
         $this->session->data['error'] = $this->language->get('order_error');
-        $this->updateOrderStatus($orderId, self::FAILED);
         $this->response->redirect($this->url->link('checkout/checkout'));
     }
 
@@ -326,12 +320,12 @@ final class ControllerExtensionPaymentPaymentGatewayCloudCreditCard extends Cont
 
         $client = $this->client($cardType);
 
-        // if (!$client->validateCallbackWithGlobals()) {
-        //     if (!headers_sent()) {
-        //         http_response_code(400);
-        //     }
-        //     die("OK");
-        // }
+        if (!$client->validateCallbackWithGlobals()) {
+            if (!headers_sent()) {
+                http_response_code(400);
+            }
+            die("OK");
+        }
 
         $callbackResult = $client->readCallback(file_get_contents('php://input'));
 

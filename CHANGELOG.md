@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v1.4.0 (2020-02-12)
+### Added
+- Gateway callback validation
+### Changed
+- Remove order status changes from gateway response handling - handled in callback
+- Remove superfluous payment gateway response error output
+### Fixed
+- Missing cc input overflow obfuscating border
+- CCV -> CVV typo  
+
 ## v1.3.1 (2020-01-20)
 ### Fixed
 - Postback callback URL card type assignment
