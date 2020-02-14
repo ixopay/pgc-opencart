@@ -23,7 +23,7 @@ if [ ! -f "/setup_complete" ]; then
     echo -e "Installing PGC Extension"
 
     PLUGIN_NAME="payment_gateway_cloud"
-
+    # TODO: Support whitelabeling like in the other shops
     if [ "${BUILD_ARTIFACT}" != "undefined" ]; then
         if [ -f /dist/paymentgatewaycloud.zip ]; then
             echo -e "Using Supplied zip ${BUILD_ARTIFACT}"

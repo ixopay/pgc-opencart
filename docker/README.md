@@ -79,7 +79,7 @@ Additional platform specific settings:
  SHOP_PGC_CC_JCB="True"
  SHOP_PGC_CC_MAESTRO="True"
  SHOP_PGC_CC_MASTERCARD="True"
- SHOP_PGC_CC_UNIOPNPAY="True"
+ SHOP_PGC_CC_UNIONPAY="True"
  SHOP_PGC_CC_VISA="True"
  # Either use "debit" or "preauthorize" transaction requests
  SHOP_PGC_CC_TYPE="debit"
@@ -89,6 +89,6 @@ Additional platform specific settings:
  SHOP_PGC_CC_TYPE_JCB="debit"
  SHOP_PGC_CC_TYPE_MAESTRO="debit"
  SHOP_PGC_CC_TYPE_MASTERCARD="debit"
- SHOP_PGC_CC_TYPE_UNIOPNPAY="debit"
+ SHOP_PGC_CC_TYPE_UNIONPAY="debit"
  SHOP_PGC_CC_TYPE_VISA="debit"
  ```
