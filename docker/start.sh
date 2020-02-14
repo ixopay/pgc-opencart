@@ -60,7 +60,7 @@ if [ ! -f "/setup_complete" ]; then
                 git checkout $BRANCH
                 if [ ! -z "${WHITELABEL}" ]; then
                     echo -e "Running Whitelabel Script for ${WHITELABEL}"
-                    DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')"
+                    DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" 2>/dev/null | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')"
                     unzip "${DEST_FILE}" -d /tmp/source
                     SRC_PATH="/tmp/source"
                     DB_FIELD_NAME=$(ls $SRC_PATH/upload/image/catalog/)
@@ -87,7 +87,7 @@ if [ ! -f "/setup_complete" ]; then
             cd /source
             if [ ! -z "${WHITELABEL}" ]; then
                 echo -e "Running Whitelabel Script for ${WHITELABEL}"
-                DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')"
+                DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" 2>/dev/null | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')"
                 unzip "${DEST_FILE}" -d /tmp/source
                 SRC_PATH="/tmp/source"
                 DB_FIELD_NAME=$(ls $SRC_PATH/upload/image/catalog/)
