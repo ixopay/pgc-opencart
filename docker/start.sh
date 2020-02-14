@@ -4,10 +4,6 @@
 
 echo -e "Starting Opencart"
 
-if [ ! $PRECONFIGURE ]; then
-    find /opt -name "config.php" -exec sed -i "s#https://#http://#g" {} \;
-fi
-
 /app-entrypoint.sh nami start --foreground apache &
 
 if [ ! -f "/setup_complete" ]; then
@@ -228,11 +224,12 @@ if [ ! -f "/setup_complete" ]; then
         chmod -R 777 /opt/bitnami/storage/
         chmod -R 777 /opt/bitnami/opencart/system/storage
         sed -i "s#'/bitnami#'/opt/bitnami#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php
-        sed -i "s#https://#http://#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php
+        sed -i "s#http://#https://#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php
         sed -i "s#define('DIR_STORAGE', '/opt/bitnami/opencart/system/storage/');#define('DIR_STORAGE', '/opt/bitnami/storage/');#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php
 
         kill 1
     else 
+        find /opt -name "config.php" -exec sed -i "s#https://#http://#g" {} \;
         # Keep script Running
         trap : TERM INT; (while true; do sleep 1m; done) & wait
     fi
