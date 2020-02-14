@@ -108,6 +108,14 @@ if [ ! -f "/setup_complete" ]; then
     # Enable Extension
     mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension\` (type, code) VALUES ('payment','${DB_FIELD_NAME}_creditcard');"
     
+    if [ $PRECONFIGURE ]; then
+        # Enable HTTPS
+        mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'config', \`key\` = 'config_secure', \`value\` = '1', serialized = '0';"
+    else
+        # Disable HTTPS
+        mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'config', \`key\` = 'config_secure', \`value\` = '0', serialized = '0';"
+    fi
+
     echo -e "Configuring Extensions"
 
     # Configure Payment Providers
@@ -199,9 +207,9 @@ if [ ! -f "/setup_complete" ]; then
     mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'payment_${DB_FIELD_NAME}_creditcard', \`key\` = 'payment_${DB_FIELD_NAME}_creditcard_cc_seamless_maestro', \`value\` = '${SHOP_PGC_CC_MAESTRO_SEAMLESS}', serialized = '0';"
     mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'payment_${DB_FIELD_NAME}_creditcard', \`key\` = 'payment_${DB_FIELD_NAME}_creditcard_cc_integration_key_maestro', \`value\` = '${SHOP_PGC_INTEGRATION_KEY}', serialized = '0';"
 
-    echo -e "Setup Complete! You can access the instance at: http://${OPENCART_HOST}"
-
     touch /setup_complete
+
+    echo -e "Setup Complete! You can access the instance at: http://${OPENCART_HOST}"
 
     if [ $PRECONFIGURE ]; then
         echo -e "Prepare for Pre-Configured build"
