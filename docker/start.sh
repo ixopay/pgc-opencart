@@ -84,6 +84,7 @@ if [ ! -f "/setup_complete" ]; then
             cd /source
             if [ ! -z "${WHITELABEL}" ]; then
                 echo -e "Running Whitelabel Script for ${WHITELABEL}"
+                echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}"
                 DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" 2>/dev/null | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')"
                 unzip "${DEST_FILE}" -d /tmp/source
                 SRC_PATH="/tmp/source"
