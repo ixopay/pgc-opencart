@@ -1,6 +1,10 @@
 #!/bin/bash
-# set -x
-#set -euo pipefail
+set -euo pipefail
+
+error_exit() {
+    echo "$1" 1>&2
+	exit 127
+}
 
 echo -e "Starting Opencart"
 
@@ -12,7 +16,7 @@ if [ ! -f "/setup_complete" ]; then
 
     while [ ! -f "/bitnami/opencart/.initialized" ]; do sleep 2s; done
 
-    find /opt -name "config.php" -exec sed -i "s#https://#http://#g" {} \;
+    find /opt -name "config.php" -exec sed -i "s#https://#http://#g" {} \; || error_exit "Failed to Update HTTP Schema"
 
     while (! $(curl --silent http://localhost:80 | grep "Your Store" > /dev/null)); do sleep 2s; done
 
@@ -23,26 +27,25 @@ if [ ! -f "/setup_complete" ]; then
     if [ "${BUILD_ARTIFACT}" != "undefined" ]; then
         if [ -f /dist/paymentgatewaycloud.zip ]; then
             echo -e "Using Supplied zip ${BUILD_ARTIFACT}"
-            ZIP_NAME=$(basename "${BUILD_ARTIFACT}")
+            ZIP_NAME=$(basename "${BUILD_ARTIFACT}") || error_exit "Failed to get ZIP-Name"
             mkdir /tmp/source
-            unzip /dist/paymentgatewaycloud.zip -d /tmp/source
-            DB_FIELD_NAME=$(ls /tmp/source/upload/image/catalog/)
+            unzip /dist/paymentgatewaycloud.zip -d /tmp/source || error_exit "Failed to de-compress Extension"
+            DB_FIELD_NAME=$(ls /tmp/source/upload/image/catalog/) || error_exit "Failed to extract DB-Field Name"
             cp -rf /tmp/source/upload/admin/* /opt/bitnami/opencart/admin/
             cp -rf /tmp/source/upload/catalog/* /opt/bitnami/opencart/catalog/
             cp -rf /tmp/source/upload/image/catalog/* /opt/bitnami/opencart/image/catalog/
             cp -rf /tmp/source/upload/system/library/* /opt/bitnami/opencart/system/library/
             # Tell Opencart about the extension
-            OC_EXT_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_install\`  (extension_download_id, filename, date_added) VALUES (0,'${ZIP_NAME}',NOW()); SELECT LAST_INSERT_ID();" | tail -n1)
+            OC_EXT_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_install\`  (extension_download_id, filename, date_added) VALUES (0,'${ZIP_NAME}',NOW()); SELECT LAST_INSERT_ID();" | tail -n1) || error_exit "Failed to register Extension"
             # Add all Extension files to Opencart DB
             for file_path in $(find /tmp/source/upload -not -path '*/\.*' -printf "%P\n"); do
                 mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_path\`  SET \`extension_install_id\`  = '${OC_EXT_ID}', \`path\`  = '${file_path}', \`date_added\`  = NOW();"
             done
             # Register and Enable Extension
-            LOCAL_XML=$(cat /source/src/install.xml)
+            LOCAL_XML=$(cat /source/src/install.xml) || error_exit "Failed to get contents of install.xml"
             mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_modification\` SET \`extension_install_id\` = '${OC_EXT_ID}', \`name\` = '${DB_FIELD_NAME}', \`code\` = '${DB_FIELD_NAME}', \`author\` = '${DB_FIELD_NAME}', \`version\` = 'zip', \`link\` = '', \`xml\` = '${LOCAL_XML}', \`status\` = '1', \`date_added\` = NOW();"
         else
-            echo "Faled to build!, there is no such file: ${BUILD_ARTIFACT}"
-            exit 1
+            error_exit "Faled to build!, there is no such file: ${BUILD_ARTIFACT}"
         fi
     else
         # Emulate Zip installation
@@ -51,16 +54,16 @@ if [ ! -f "/setup_complete" ]; then
                 # Checkout and Package github code
                 SRC_PATH="./src"
                 echo -e "Checking out branch ${BRANCH} from ${REPOSITORY}"
-                git clone $REPOSITORY /tmp/paymentgatewaycloud
+                git clone $REPOSITORY /tmp/paymentgatewaycloud || error_exit "Failed to clone Repository $REPOSITORY"
                 cd /tmp/paymentgatewaycloud
-                git checkout $BRANCH
+                git checkout $BRANCH || error_exit "Failed to checkout $BRANCH"
                 if [ ! -z "${WHITELABEL}" ]; then
                     echo -e "Running Whitelabel Script for ${WHITELABEL}"
-                    echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}"
-                    DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" 2>/dev/null | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')"
+                    echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" || error_exit "Failed to run Whitelabel Script for '$WHITELABEL'"
+                    DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" 2>/dev/null | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')" || error_exit "Failed to get Zip File"
                     unzip "${DEST_FILE}" -d /tmp/source
                     SRC_PATH="/tmp/source"
-                    DB_FIELD_NAME=$(ls $SRC_PATH/upload/image/catalog/)
+                    DB_FIELD_NAME=$(ls $SRC_PATH/upload/image/catalog/) || error_exit "Failed to extract DB-Field Name"
                 fi
                 # Copy Files
                 cp -rf $SRC_PATH/upload/admin/* /opt/bitnami/opencart/admin/
@@ -68,13 +71,13 @@ if [ ! -f "/setup_complete" ]; then
                 cp -rf $SRC_PATH/upload/image/catalog/* /opt/bitnami/opencart/image/catalog/
                 cp -rf $SRC_PATH/upload/system/library/* /opt/bitnami/opencart/system/library/
                 # Tell Opencart about the extension
-                OC_EXT_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_install\`  (extension_download_id, filename, date_added) VALUES (0,'opencart-${DB_FIELD_NAME}-github-${BRANCH}',NOW()); SELECT LAST_INSERT_ID();" | tail -n1)
+                OC_EXT_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_install\`  (extension_download_id, filename, date_added) VALUES (0,'opencart-${DB_FIELD_NAME}-github-${BRANCH}',NOW()); SELECT LAST_INSERT_ID();" | tail -n1) || error_exit "Failed to register Extension"
                 # Add all Extension files to Opencart DB
                 for file_path in $(find $SRC_PATH/upload -not -path '*/\.*' -printf "%P\n"); do
                     mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_path\`  SET \`extension_install_id\`  = '${OC_EXT_ID}', \`path\`  = '${file_path}', \`date_added\`  = NOW();"
                 done
                 # Register and Enable Extension
-                LOCAL_XML=$(cat $SRC_PATH/install.xml)
+                LOCAL_XML=$(cat $SRC_PATH/install.xml) || error_exit "Failed to get contents of install.xml"
                 mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_modification\`  SET \`extension_install_id\`  = '${OC_EXT_ID}', \`name\`  = '${DB_FIELD_NAME}', \`code\`  = '${DB_FIELD_NAME}', \`author\`  = '${DB_FIELD_NAME}', \`version\`  = '${BRANCH}', \`link\`  = '', \`xml\`  = '${LOCAL_XML}', \`status\`  = '1', \`date_added\`  = NOW();"
             fi
         else
@@ -84,24 +87,24 @@ if [ ! -f "/setup_complete" ]; then
             cd /source
             if [ ! -z "${WHITELABEL}" ]; then
                 echo -e "Running Whitelabel Script for ${WHITELABEL}"
-                echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}"
-                DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" 2>/dev/null | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')"
+                echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" || error_exit "Failed to run Whitelabel Script for '$WHITELABEL'"
+                DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" 2>/dev/null | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')" || error_exit "Failed to get Zip File"
                 unzip "${DEST_FILE}" -d /tmp/source
                 SRC_PATH="/tmp/source"
-                DB_FIELD_NAME=$(ls $SRC_PATH/upload/image/catalog/)
+                DB_FIELD_NAME=$(ls $SRC_PATH/upload/image/catalog/) || error_exit "Failed to extract DB-Field Name"
             fi
             cp -rf $SRC_PATH/upload/admin/* /opt/bitnami/opencart/admin/
             cp -rf $SRC_PATH/upload/catalog/* /opt/bitnami/opencart/catalog/
             cp -rf $SRC_PATH/upload/image/catalog/* /opt/bitnami/opencart/image/catalog/
             cp -rf $SRC_PATH/upload/system/library/* /opt/bitnami/opencart/system/library/
             # Tell Opencart about the extension
-            OC_EXT_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_install\`  (extension_download_id, filename, date_added) VALUES (0,'opencart-${DB_FIELD_NAME}-local-dev',NOW()); SELECT LAST_INSERT_ID();" | tail -n1)
+            OC_EXT_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_install\`  (extension_download_id, filename, date_added) VALUES (0,'opencart-${DB_FIELD_NAME}-local-dev',NOW()); SELECT LAST_INSERT_ID();" | tail -n1) || error_exit "Failed to register Extension"
             # Add all Extension files to Opencart DB
             for file_path in $(find $SRC_PATH/upload -not -path '*/\.*' -printf "%P\n"); do
                 mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_path\`  SET \`extension_install_id\`  = '${OC_EXT_ID}', \`path\`  = '${file_path}', \`date_added\`  = NOW();"
             done
             # Register Extension
-            LOCAL_XML=$(cat $SRC_PATH/install.xml)
+            LOCAL_XML=$(cat $SRC_PATH/install.xml) || error_exit "Failed to get contents of install.xml"
             mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_modification\` SET \`extension_install_id\` = '${OC_EXT_ID}', \`name\` = '${DB_FIELD_NAME}', \`code\` = '${DB_FIELD_NAME}', \`author\` = '${DB_FIELD_NAME}', \`version\` = 'local-dev', \`link\` = '', \`xml\` = '${LOCAL_XML}', \`status\` = '1', \`date_added\` = NOW();"
         fi
     fi
@@ -232,9 +235,9 @@ if [ ! -f "/setup_complete" ]; then
         chmod -R 775 /opt/bitnami/opencart
         chmod -R 777 /opt/bitnami/storage/
         chmod -R 777 /opt/bitnami/opencart/system/storage
-        sed -i "s#'/bitnami#'/opt/bitnami#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php
-        sed -i "s#http://#https://#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php
-        sed -i "s#define('DIR_STORAGE', '/opt/bitnami/opencart/system/storage/');#define('DIR_STORAGE', '/opt/bitnami/storage/');#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php
+        sed -i "s#'/bitnami#'/opt/bitnami#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php || error_exit "Failed to move opencart base dir"
+        sed -i "s#http://#https://#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php || error_exit "Failed to replace HTTP Schema"
+        sed -i "s#define('DIR_STORAGE', '/opt/bitnami/opencart/system/storage/');#define('DIR_STORAGE', '/opt/bitnami/storage/');#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php || error_exit "Failed to move Storage Dirs"
 
         kill 1
     else 
