@@ -3,7 +3,7 @@ set -euo pipefail
 
 error_exit() {
     echo "$1" 1>&2
-	exit 127
+	exit 1
 }
 
 echo -e "Starting Opencart"
@@ -61,7 +61,7 @@ if [ ! -f "/setup_complete" ]; then
                     echo -e "Running Whitelabel Script for ${WHITELABEL}"
                     echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" || error_exit "Failed to run Whitelabel Script for '$WHITELABEL'"
                     DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" 2>/dev/null | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')" || error_exit "Failed to get Zip File"
-                    unzip "${DEST_FILE}" -d /tmp/source
+                    unzip "${DEST_FILE}" -d /tmp/source || error_exit "Failed to de-compress Extension"
                     SRC_PATH="/tmp/source"
                     DB_FIELD_NAME=$(ls $SRC_PATH/upload/image/catalog/) || error_exit "Failed to extract DB-Field Name"
                 fi
@@ -89,7 +89,7 @@ if [ ! -f "/setup_complete" ]; then
                 echo -e "Running Whitelabel Script for ${WHITELABEL}"
                 echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" || error_exit "Failed to run Whitelabel Script for '$WHITELABEL'"
                 DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" 2>/dev/null | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')" || error_exit "Failed to get Zip File"
-                unzip "${DEST_FILE}" -d /tmp/source
+                unzip "${DEST_FILE}" -d /tmp/source || error_exit "Failed to de-compress Extension"
                 SRC_PATH="/tmp/source"
                 DB_FIELD_NAME=$(ls $SRC_PATH/upload/image/catalog/) || error_exit "Failed to extract DB-Field Name"
             fi
@@ -239,7 +239,7 @@ if [ ! -f "/setup_complete" ]; then
         sed -i "s#http://#https://#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php || error_exit "Failed to replace HTTP Schema"
         sed -i "s#define('DIR_STORAGE', '/opt/bitnami/opencart/system/storage/');#define('DIR_STORAGE', '/opt/bitnami/storage/');#g" /opt/bitnami/opencart/config.php /opt/bitnami/opencart/admin/config.php || error_exit "Failed to move Storage Dirs"
 
-        kill 1
+        exit 0
     else 
         find /opt -name "config.php" -exec sed -i "s#https://#http://#g" {} \;
         # Keep script Running

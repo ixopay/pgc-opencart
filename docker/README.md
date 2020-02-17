@@ -33,9 +33,8 @@ To develop and test plugin changes, you can run the following docker-compose com
 To test a build you generated via build.php run the following command from the plugin root directory:
 
 ```bash
- php build.php sandbox.paymentgateway.cloud "My Payment Provider"
+ WHITELABEL="My Payment Provider" \
  BITNAMI_IMAGE_VERSION="latest" \
- BUILD_ARTIFACT="${PWD}/dist/opencart-my-payment-provider-1.3.1.ocmod.zip" \
  OPENCART_HOST="localhost" \
  OPENCART_USERNAME="dev" \
  OPENCART_PASSWORD="dev" \
