@@ -61,7 +61,7 @@ if [ ! -f "/setup_complete" ]; then
                     echo -e "Running Whitelabel Script for ${WHITELABEL}"
                     echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" || error_exit "Failed to run Whitelabel Script for '$WHITELABEL'"
                     DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" 2>/dev/null | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')" || error_exit "Failed to get Zip File"
-                    unzip "${DEST_FILE}" -d /tmp/source || error_exit "Failed to de-compress Extension"
+                    unzip -q "${DEST_FILE}" -d /tmp/source  || : # || error_exit "Failed to de-compress Extension"
                     SRC_PATH="/tmp/source"
                     DB_FIELD_NAME=$(ls $SRC_PATH/upload/image/catalog/) || error_exit "Failed to extract DB-Field Name"
                 fi
@@ -89,7 +89,7 @@ if [ ! -f "/setup_complete" ]; then
                 echo -e "Running Whitelabel Script for ${WHITELABEL}"
                 echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" || error_exit "Failed to run Whitelabel Script for '$WHITELABEL'"
                 DEST_FILE="$(echo "y" | php build.php "gateway.mypaymentprovider.com" "${WHITELABEL}" 2>/dev/null | tail -n 1 | sed 's/.*Created file "\(.*\)".*/\1/g')" || error_exit "Failed to get Zip File"
-                unzip "${DEST_FILE}" -d /tmp/source || error_exit "Failed to de-compress Extension"
+                unzip -q "${DEST_FILE}" -d /tmp/source || : # || error_exit "Failed to de-compress Extension"
                 SRC_PATH="/tmp/source"
                 DB_FIELD_NAME=$(ls $SRC_PATH/upload/image/catalog/) || error_exit "Failed to extract DB-Field Name"
             fi
