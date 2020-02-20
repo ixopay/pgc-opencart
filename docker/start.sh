@@ -213,6 +213,13 @@ if [ ! -f "/setup_complete" ]; then
     mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'payment_${DB_FIELD_NAME}_creditcard', \`key\` = 'payment_${DB_FIELD_NAME}_creditcard_cc_seamless_maestro', \`value\` = '${SHOP_PGC_CC_MAESTRO_SEAMLESS}', serialized = '0';"
     mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'payment_${DB_FIELD_NAME}_creditcard', \`key\` = 'payment_${DB_FIELD_NAME}_creditcard_cc_integration_key_maestro', \`value\` = '${SHOP_PGC_INTEGRATION_KEY}', serialized = '0';"
 
+    if [ $DEMO_CUSTOMER_PASSWORD ]; then
+        echo -e "Creating Demo Customer"
+        DEMO_USER_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_customer\` (customer_group_id, store_id, language_id, firstname, lastname, email, telephone, fax, password, salt, newsletter, status, date_added, custom_field, ip, safe, token, code) VALUES (1, 0, 1, 'Robert Z.', 'Johnson', 'RobertZJohnson@einrot.com', '217-585-5994', '', MD5('${DEMO_CUSTOMER_PASSWORD}'), '', 0, 1, NOW(), '', '', 0, '', ''); SELECT LAST_INSERT_ID();" | tail -n1)
+        DEMO_ADDRESS_ID=$(mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_address\` (customer_id, firstname, lastname, company, address_1, city, postcode, country_id, zone_id, address_2, custom_field) VALUES (${DEMO_USER_ID}, 'Johnson', 'Robert Z.', 'Ixolit', '242 University Hill Road', 'Springfield', 62703, 223, 3635, '', ''); SELECT LAST_INSERT_ID();" | tail -n1)
+        mysql -B -h mariadb -u root bitnami_opencart -e "UPDATE \`oc_customer\` SET address_id=${DEMO_ADDRESS_ID} WHERE customer_id = ${DEMO_USER_ID};"
+    fi
+
     touch /setup_complete
 
     echo -e "Setup Complete! You can access the instance at: http://${OPENCART_HOST}"
