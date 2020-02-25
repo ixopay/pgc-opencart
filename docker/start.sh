@@ -112,7 +112,7 @@ if [ ! -f "/setup_complete" ]; then
     # Enable Extension
     mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension\` (type, code) VALUES ('payment','${DB_FIELD_NAME}_creditcard');"
     
-    if [[ "${SCHEMA}" -eq "http" ]]; then
+    if [[ "${SCHEMA}" == "http" ]]; then
         # Disable HTTPS
         mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'config', \`key\` = 'config_secure', \`value\` = '0', serialized = '0';"
     elif [ $PRECONFIGURE ]; then
@@ -260,7 +260,7 @@ if [ ! -f "/setup_complete" ]; then
             sed -i '/HTTP_SERVER/d' /opt/bitnami/opencart/config.php
             sed -i '/HTTPS_SERVER/d' /opt/bitnami/opencart/config.php
             # Update Hostname
-            if [[ "${SCHEMA}" -eq "http" ]]; then
+            if [[ "${SCHEMA}" == "http" ]]; then
                 echo "define('HTTP_SERVER', 'http://${OPENCART_HOST}/admin/');" >> /opt/bitnami/opencart/admin/config.php
                 echo "define('HTTP_CATALOG', 'http://${OPENCART_HOST}/');" >> /opt/bitnami/opencart/admin/config.php
                 echo "define('HTTPS_SERVER', 'http://${OPENCART_HOST}/admin/');" >> /opt/bitnami/opencart/admin/config.php
@@ -287,7 +287,7 @@ else
         ln -s /opt/bitnami/opencart /bitnami/opencart
     fi
 
-    if [[ "${SCHEMA}" -eq "http" ]]; then
+    if [[ "${SCHEMA}" == "http" ]]; then
         # Disable HTTPS
         mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'config', \`key\` = 'config_secure', \`value\` = '0', serialized = '0';"
     fi
@@ -302,7 +302,7 @@ else
         sed -i '/HTTP_SERVER/d' /opt/bitnami/opencart/config.php
         sed -i '/HTTPS_SERVER/d' /opt/bitnami/opencart/config.php
         # Update Hostname
-        if [[ "${SCHEMA}" -eq "http" ]]; then
+        if [[ "${SCHEMA}" == "http" ]]; then
             echo "define('HTTP_SERVER', 'http://${OPENCART_HOST}/admin/');" >> /opt/bitnami/opencart/admin/config.php
             echo "define('HTTP_CATALOG', 'http://${OPENCART_HOST}/');" >> /opt/bitnami/opencart/admin/config.php
             echo "define('HTTPS_SERVER', 'http://${OPENCART_HOST}/admin/');" >> /opt/bitnami/opencart/admin/config.php
