@@ -265,6 +265,33 @@ else
         mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'config', \`key\` = 'config_secure', \`value\` = '0', serialized = '0';"
     fi
 
+    if [ $OPENCART_HOST ]; then
+        echo -e "Updating Shop URL to: ${OPENCART_HOST}"
+        # Delete old Hostname from Config
+        sed -i '/HTTP_SERVER/d' /opt/bitnami/opencart/admin/config.php
+        sed -i '/HTTP_CATALOG/d' /opt/bitnami/opencart/admin/config.php
+        sed -i '/HTTPS_SERVER/d' /opt/bitnami/opencart/admin/config.php
+        sed -i '/HTTPS_CATALOG/d' /opt/bitnami/opencart/admin/config.php
+        sed -i '/HTTP_SERVER/d' /opt/bitnami/opencart/config.php
+        sed -i '/HTTPS_SERVER/d' /opt/bitnami/opencart/config.php
+        # Update Hostname
+        if [ "${SCHEMA}" -eq "http" ]; then
+            echo "define('HTTP_SERVER', 'http://${OPENCART_HOST}/admin/');" >> /opt/bitnami/opencart/admin/config.php
+            echo "define('HTTP_CATALOG', 'http://${OPENCART_HOST}/');" >> /opt/bitnami/opencart/admin/config.php
+            echo "define('HTTPS_SERVER', 'http://${OPENCART_HOST}/admin/');" >> /opt/bitnami/opencart/admin/config.php
+            echo "define('HTTPS_CATALOG', 'http://${OPENCART_HOST}/');" >> /opt/bitnami/opencart/admin/config.php
+            echo "define('HTTP_SERVER', 'http://${OPENCART_HOST}/');" >> /opt/bitnami/opencart/config.php
+            echo "define('HTTPS_SERVER', 'http://${OPENCART_HOST}/');" >> /opt/bitnami/opencart/config.php
+        else
+            echo "define('HTTP_SERVER', 'https://${OPENCART_HOST}/admin/');" >> /opt/bitnami/opencart/admin/config.php
+            echo "define('HTTP_CATALOG', 'https://${OPENCART_HOST}/');" >> /opt/bitnami/opencart/admin/config.php
+            echo "define('HTTPS_SERVER', 'https://${OPENCART_HOST}/admin/');" >> /opt/bitnami/opencart/admin/config.php
+            echo "define('HTTPS_CATALOG', 'https://${OPENCART_HOST}/');" >> /opt/bitnami/opencart/admin/config.php
+            echo "define('HTTP_SERVER', 'https://${OPENCART_HOST}/');" >> /opt/bitnami/opencart/config.php
+            echo "define('HTTPS_SERVER', 'https://${OPENCART_HOST}/');" >> /opt/bitnami/opencart/config.php
+        fi
+    fi
+
     # Keep script Running
     trap : TERM INT; (while true; do sleep 1m; done) & wait
 
