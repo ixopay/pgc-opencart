@@ -112,7 +112,7 @@ if [ ! -f "/setup_complete" ]; then
     # Enable Extension
     mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension\` (type, code) VALUES ('payment','${DB_FIELD_NAME}_creditcard');"
     
-    if [ "${SCHEMA}" -eq "http" ]; then
+    if [[ "${SCHEMA}" -eq "http" ]]; then
         # Disable HTTPS
         mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO oc_setting SET store_id = '0', \`code\` = 'config', \`key\` = 'config_secure', \`value\` = '0', serialized = '0';"
     elif [ $PRECONFIGURE ]; then
