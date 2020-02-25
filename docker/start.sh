@@ -275,7 +275,7 @@ else
         sed -i '/HTTP_SERVER/d' /opt/bitnami/opencart/config.php
         sed -i '/HTTPS_SERVER/d' /opt/bitnami/opencart/config.php
         # Update Hostname
-        if [ "${SCHEMA}" -eq "http" ]; then
+        if [[ "${SCHEMA}" -eq "http" ]]; then
             echo "define('HTTP_SERVER', 'http://${OPENCART_HOST}/admin/');" >> /opt/bitnami/opencart/admin/config.php
             echo "define('HTTP_CATALOG', 'http://${OPENCART_HOST}/');" >> /opt/bitnami/opencart/admin/config.php
             echo "define('HTTPS_SERVER', 'http://${OPENCART_HOST}/admin/');" >> /opt/bitnami/opencart/admin/config.php
