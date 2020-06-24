@@ -1,4 +1,4 @@
-FROM bitnami/opencart:3
+FROM bitnami/opencart:3-debian-10
 
 EXPOSE 80
 

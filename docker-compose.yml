@@ -1,7 +1,7 @@
 version: '3'
 services:
   mariadb:
-    image: 'bitnami/mariadb:10.3'
+    image: 'bitnami/mariadb:10.3-debian-10'
     hostname: mariadb
     environment:
       - MARIADB_USER=bn_opencart
