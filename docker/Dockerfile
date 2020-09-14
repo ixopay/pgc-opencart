@@ -1,4 +1,5 @@
-FROM bitnami/opencart:3-debian-10
+ARG UPSTREAM_TAG=${UPSTREAM_TAG:-latest}  
+FROM bitnami/opencart:${UPSTREAM_TAG}
 
 EXPOSE 80
 
