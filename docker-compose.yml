@@ -1,0 +1,76 @@
+version: '2'
+services:
+  mariadb:
+    image: 'docker.io/bitnami/mariadb:10.3-debian-10'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_USER=bn_opencart
+      - MARIADB_DATABASE=bitnami_opencart
+    volumes:
+      - 'mariadb_data:/bitnami/mariadb'
+  opencart:
+    image: 'docker.io/bitnami/opencart:3-debian-10'
+    ports:
+      - '80:8080'
+      - '443:8443'
+    environment:
+      - OPENCART_DATABASE_HOST=mariadb
+      - OPENCART_DATABASE_PORT_NUMBER=3306
+      - OPENCART_DATABASE_USER=bn_opencart
+      - OPENCART_DATABASE_NAME=bitnami_opencart
+      - ALLOW_EMPTY_PASSWORD=yes
+      - WHITELABEL=${WHITELABEL:-AwesomePay}
+      - OPENCART_HOST=${OPENCART_HOST:-localhost}
+      - OPENCART_EMAIL=${OPENCART_EMAIL:-user@example.com}
+      - OPENCART_PASSWORD=${OPENCART_PASSWORD:-bitnami1}
+      - OPENCART_USERNAME=${OPENCART_USERNAME:-user}
+      - HTTPS=${HTTPS:-false}
+      - REPOSITORY=${REPOSITORY:-https://github.com/user/repo}
+      - BRANCH=${BRANCH:-master}
+      - DEMO_CUSTOMER_PASSWORD=${DEMO_CUSTOMER_PASSWORD:-customer}
+      - SHOP_PGC_URL=${SHOP_PGC_URL:-sandbox}
+      - SHOP_PGC_USER=${SHOP_PGC_USER:-test-user}
+      - SHOP_PGC_PASSWORD=${SHOP_PGC_PASSWORD:-test-pass}
+      - SHOP_PGC_API_KEY=${SHOP_PGC_API_KEY:-key}
+      - SHOP_PGC_SECRET=${SHOP_PGC_SECRET:-secret}
+      - SHOP_PGC_INTEGRATION_KEY=${SHOP_PGC_INTEGRATION_KEY:-int_key}
+      - SHOP_PGC_CC_ENABLED=${SHOP_PGC_CC_ENABLED:-1}
+      - SHOP_PGC_CC_MODE=${SHOP_PGC_CC_MODE:-debit}
+      - SHOP_PGC_CC_SEAMLESS=${SHOP_PGC_CC_SEAMLESS:-0}
+      - SHOP_PGC_CC_AMEX=${SHOP_PGC_CC_AMEX:-1}
+      - SHOP_PGC_CC_AMEX_MODE=${SHOP_PGC_CC_AMEX_MODE:-debit}
+      - SHOP_PGC_CC_AMEX_SEAMLESS=${SHOP_PGC_CC_AMEX_SEAMLESS:-0}
+      - SHOP_PGC_CC_DINERS=${SHOP_PGC_CC_DINERS:-1}
+      - SHOP_PGC_CC_DINERS_MODE=${SHOP_PGC_CC_DINERS_MODE:-preauthorize}
+      - SHOP_PGC_CC_DINERS_SEAMLESS=${SHOP_PGC_CC_DINERS_SEAMLESS:-0}
+      - SHOP_PGC_CC_DISCOVER=${SHOP_PGC_CC_DISCOVER:-1}
+      - SHOP_PGC_CC_DISCOVER_MODE=${SHOP_PGC_CC_DISCOVER_MODE:-debit}
+      - SHOP_PGC_CC_DISCOVER_SEAMLESS=${SHOP_PGC_CC_DISCOVER_SEAMLESS:-1}
+      - SHOP_PGC_CC_JCB=${SHOP_PGC_CC_JCB:-1}
+      - SHOP_PGC_CC_JCB_MODE=${SHOP_PGC_CC_JCB_MODE:-debit}
+      - SHOP_PGC_CC_JCB_SEAMLESS=${SHOP_PGC_CC_JCB_SEAMLESS:-1}
+      - SHOP_PGC_CC_MAESTRO=${SHOP_PGC_CC_MAESTRO:-1}
+      - SHOP_PGC_CC_MAESTRO_MODE=${SHOP_PGC_CC_MAESTRO_MODE:-debit}
+      - SHOP_PGC_CC_MAESTRO_SEAMLESS=${SHOP_PGC_CC_MAESTRO_SEAMLESS:-1}
+      - SHOP_PGC_CC_MASTERCARD=${SHOP_PGC_CC_MASTERCARD:-1}
+      - SHOP_PGC_CC_MASTERCARD_MODE=${SHOP_PGC_CC_MASTERCARD_MODE:-debit}
+      - SHOP_PGC_CC_MASTERCARD_SEAMLESS=${SHOP_PGC_CC_MASTERCARD_SEAMLESS:-1}
+      - SHOP_PGC_CC_UNIONPAY=${SHOP_PGC_CC_UNIONPAY:-1}
+      - SHOP_PGC_CC_UNIONPAY_MODE=${SHOP_PGC_CC_UNIONPAY_MODE:-preauthorize}
+      - SHOP_PGC_CC_UNIONPAY_SEAMLESS=${SHOP_PGC_CC_UNIONPAY_SEAMLESS:-1}
+      - SHOP_PGC_CC_VISA=${SHOP_PGC_CC_VISA:-1}
+      - SHOP_PGC_CC_VISA_MODE=${SHOP_PGC_CC_VISA_MODE:-preauthorize}
+      - SHOP_PGC_CC_VISA_SEAMLESS=${SHOP_PGC_CC_VISA_SEAMLESS:-1}
+    volumes:
+      - 'opencart_data:/bitnami/opencart'
+      - 'opencart_storage_data:/bitnami/opencart_storage/'
+      - './docker/configure.sh:/docker-entrypoint-init.d/configure.sh:ro'
+    depends_on:
+      - mariadb
+volumes:
+  mariadb_data:
+    driver: local
+  opencart_data:
+    driver: local
+  opencart_storage_data:
+    driver: local
