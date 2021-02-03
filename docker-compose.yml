@@ -1,51 +1,32 @@
-version: '3'
+version: '2'
 services:
   mariadb:
-    image: 'bitnami/mariadb:10.3-debian-10'
-    hostname: mariadb
+    image: 'docker.io/bitnami/mariadb:10.3-debian-10'
     environment:
+      - ALLOW_EMPTY_PASSWORD=yes
       - MARIADB_USER=bn_opencart
       - MARIADB_DATABASE=bitnami_opencart
-      - ALLOW_EMPTY_PASSWORD=yes
-  opencart:
-    build: 'docker/'
     volumes:
-      - '.:/source'
-      - '${BUILD_ARTIFACT:-undefined}:/dist/paymentgatewaycloud.zip'
+      - 'mariadb_data:/bitnami/mariadb'
+  opencart:
+    image: 'docker.io/bitnami/opencart:3-debian-10'
     ports:
-      - '80:80'
-      - '443:443'
-    depends_on:
-      - mariadb
+      - '80:8080'
+      - '443:8443'
     environment:
-      - SCHEMA=http
-      - ALLOW_EMPTY_PASSWORD=${ALLOW_EMPTY_PASSWORD:-yes}
-      - WHITELABEL=${WHITELABEL:-}
-      - BITNAMI_APP_NAME=${BITNAMI_APP_NAME:-opencart}
-      - BITNAMI_IMAGE_VERSION=${BITNAMI_IMAGE_VERSION:-latest}
-      - MARIADB_HOST=${MARIADB_HOST:-mariadb}
-      - MARIADB_PORT_NUMBER=${MARIADB_PORT_NUMBER:-3306}
-      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
-      - MARIADB_ROOT_USER=${MARIADB_ROOT_USER:-root}
-      - MYSQL_CLIENT_CREATE_DATABASE_NAME=${MYSQL_CLIENT_CREATE_DATABASE_NAME}
-      - MYSQL_CLIENT_CREATE_DATABASE_PASSWORD=${MYSQL_CLIENT_CREATE_DATABASE_PASSWORD}
-      - MYSQL_CLIENT_CREATE_DATABASE_PRIVILEGES=${MYSQL_CLIENT_CREATE_DATABASE_PRIVILEGES:-ALL}
-      - MYSQL_CLIENT_CREATE_DATABASE_USER=${MYSQL_CLIENT_CREATE_DATABASE_USER}
-      - OPENCART_DATABASE_NAME=${OPENCART_DATABASE_NAME:-bitnami_opencart}
-      - OPENCART_DATABASE_PASSWORD=${OPENCART_DATABASE_PASSWORD}
-      - OPENCART_DATABASE_USER=${OPENCART_DATABASE_USER:-bn_opencart}
-      - OPENCART_EMAIL=${OPENCART_EMAIL:-user@example.com}
+      - OPENCART_DATABASE_HOST=mariadb
+      - OPENCART_DATABASE_PORT_NUMBER=3306
+      - OPENCART_DATABASE_USER=bn_opencart
+      - OPENCART_DATABASE_NAME=bitnami_opencart
+      - ALLOW_EMPTY_PASSWORD=yes
+      - WHITELABEL=${WHITELABEL:-AwesomePay}
       - OPENCART_HOST=${OPENCART_HOST:-localhost}
-      - OPENCART_HTTP_TIMEOUT=${OPENCART_HTTP_TIMEOUT:-120}
+      - OPENCART_EMAIL=${OPENCART_EMAIL:-user@example.com}
       - OPENCART_PASSWORD=${OPENCART_PASSWORD:-bitnami1}
-      - REPOSITORY=${REPOSITORY:-https://github.com/user/repo}
       - OPENCART_USERNAME=${OPENCART_USERNAME:-user}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_PROTOCOL=${SMTP_PROTOCOL}
-      - SMTP_USER=${SMTP_USER}
-      - PRECONFIGURE=${PRECONFIGURE}
+      - HTTPS=${HTTPS:-false}
+      - REPOSITORY=${REPOSITORY:-https://github.com/user/repo}
+      - BRANCH=${BRANCH:-master}
       - DEMO_CUSTOMER_PASSWORD=${DEMO_CUSTOMER_PASSWORD:-customer}
       - SHOP_PGC_URL=${SHOP_PGC_URL:-sandbox}
       - SHOP_PGC_USER=${SHOP_PGC_USER:-test-user}
@@ -80,7 +61,16 @@ services:
       - SHOP_PGC_CC_VISA=${SHOP_PGC_CC_VISA:-1}
       - SHOP_PGC_CC_VISA_MODE=${SHOP_PGC_CC_VISA_MODE:-preauthorize}
       - SHOP_PGC_CC_VISA_SEAMLESS=${SHOP_PGC_CC_VISA_SEAMLESS:-1}
-      - BUILD_ARTIFACT=${BUILD_ARTIFACT:-undefined}
-
+    volumes:
+      - 'opencart_data:/bitnami/opencart'
+      - 'opencart_storage_data:/bitnami/opencart_storage/'
+      - './docker/configure.sh:/docker-entrypoint-init.d/configure.sh:ro'
+    depends_on:
+      - mariadb
 volumes:
-  undefined:
+  mariadb_data:
+    driver: local
+  opencart_data:
+    driver: local
+  opencart_storage_data:
+    driver: local

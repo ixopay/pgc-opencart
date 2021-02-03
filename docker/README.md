@@ -1,6 +1,9 @@
 # Docker demo & development environment
 
-We supply ready to use Docker environments for plugin development & testing. 
+We supply ready to use Docker environments for plugin development & testing.
+
+- `docker-compose.yml` Setup Opencart instance and configure Pgc Extension (Testing)
+- `docker-compose.dev.yml` Setup Opencart instance with Pgc Extension, but without Configuration (Development)
 
 **Warning!** This docker image is dedicated for development & demo usage, we don't recommended to use it in production.
 
@@ -8,86 +11,76 @@ We supply ready to use Docker environments for plugin development & testing.
 
 ## Usage
 
-To quickly spawn a Opencart test shop with a plugin tagged at our Github repository:
-Clone our plugin repository and run the following command from the plugin root directory:
+Run Development Environment
+```
+docker-compose -f docker-compose.dev.yml up --force-recreate --renew-anon-volumes
 
-```bash
- REPOSITORY="https://github.com/ixopay/pgc-opencart" \
- BRANCH="master" \
- OPENCART_HOST="localhost" \
- OPENCART_USERNAME="dev" \
- OPENCART_PASSWORD="dev" \
-  docker-compose -f docker-compose.github.yml up --build --force-recreate --renew-anon-volumes
+# Reload Extension Source Code in Opencart by flushing the caches:
+docker-compose -f docker-compose.dev.yml exec opencart find /opt -name 'cache' -type d -exec rm -rf {}/* \;
+docker-compose -f docker-compose.dev.yml exec opencart find /bitnami -name 'cache' -type d -exec rm -rf {}/* \;
 ```
 
-To develop and test plugin changes, you can run the following docker-compose command from the plugin root directory, to start a Opencart shop & initialize a database with a bind mounted version of the plugin. The shop will be accessible via: `http://localhost/admin`.
-
-```bash
- BITNAMI_IMAGE_VERSION="latest" \
- OPENCART_HOST="localhost" \
- OPENCART_USERNAME="dev" \
- OPENCART_PASSWORD="dev" \
-  docker-compose up --build --force-recreate --renew-anon-volumes
+Run Test Environment
+```
+docker-compose up --force-recreate --renew-anon-volumes
 ```
 
-To test a build you generated via build.php run the following command from the plugin root directory:
 
-```bash
- WHITELABEL="My Payment Provider" \
- BITNAMI_IMAGE_VERSION="latest" \
- OPENCART_HOST="localhost" \
- OPENCART_USERNAME="dev" \
- OPENCART_PASSWORD="dev" \
-  docker-compose up --build --force-recreate --renew-anon-volumes
-```
+## Configuration
 
-Please note:
+Settings can be supplied as Environment Variables inside the docker-compose file.
 
-- By running the command we always run a complete `--build` for the shop container, `--force-recreate` to delete previous containers and always delete the previous instance's storage volumes via `--renew-anon-volumes`. We don't support to change variables without rebuilding the full container.
-- We currently use Bitnami Docker images as base for the environment and add our plugin.
-- Further environment variables can be set, please take a look at `docker/Dockerfile` for a complete list.
 
-### Customize Settings
+| Value                    |           Default            |                       Description                       |
+| ------------------------ |:----------------------------:|:-------------------------------------------------------:|
+| HTTPS                    |            false             |                  Enable/Disable HTTPS                   |
+| REPOSITORY               | https://github.com/user/repo | URL to the Repo where your branded Extension is located |
+| BRANCH                   |            master            |        Which Branch to checkout from REPOSITORY         |
+| WHITELABEL               |          AwesomePay          |                  Whitelabel Extension                   |
+| OPENCART_EMAIL           |       user@example.com       |                   Default Admin Email                   |
+| OPENCART_USERNAME        |             user             |                 Default Admin Username                  |
+| OPENCART_PASSWORD        |           bitnami1           |                 Default Admin Password                  |
+| DEMO_CUSTOMER_PASSWORD   |           customer           |                  Default User Password                  |
+| SHOP_PGC_URL             |           sandbox            |                 URL to your Gateway API                 |
+| SHOP_PGC_USER            |          test-user           |                    Your Gateway User                    |
+| SHOP_PGC_PASSWORD        |          test-pass           |               Your Gateway User Password                |
+| SHOP_PGC_API_KEY         |             key              |                  Your Gateway API-Key                   |
+| SHOP_PGC_SECRET          |            secret            |                 Your Gateway API-Secret                 |
+| SHOP_PGC_INTEGRATION_KEY |           int_key            |              Your Gateway Integration Key               |
+| SHOP_PGC_SEAMLESS        |              1               |      Whether to Enable (1) or Disable (0) Seamless      |
 
-Defaults for the Docker build are configured in the `docker-compose` files. You can either:
- - set variables via environment variable or (like above)
- - persist them in the `environment:` section of the respective docker-compose file.
 
-### Platform credentials
+### You can also Configure seperate CC Brands with
 
-To successfully test a payment flow you will need merchant credentials for the payment platform and set them via the following environment variables:
 
-```bash
- # Base url for payment plaform API
- SHOP_PGC_URL="https://sandbox.paymentgateway.cloud"
- # Credentials for payment platform API
- SHOP_PGC_USER="test-user"
- SHOP_PGC_PASSWORD="test-pass"
- SHOP_PGC_API_KEY="key"
- SHOP_PGC_SECRET="secret"
- SHOP_PGC_INTEGRATION_KEY="int-key"
-```
+| Value                        | Default |                   Description                   |
+| ---------------------------- |:-------:|:-----------------------------------------------:|
+| SHOP_PGC_CC_<BRAND>          |    1    |       Enable (1) or Disable (0) CC Brand        |
+| SHOP_PGC_CC_<BRAND>_MODE     |  debit  |              debit / preauthorize               |
+| SHOP_PGC_CC_<BRAND>_SEAMLESS |    1    | Enable (1) or Disable (0) Seamless for CC Brand |
 
-Additional platform specific settings:
 
-```bash
- # Enable or disable payments for specific schemes
- SHOP_PGC_CC_AMEX="True"
- SHOP_PGC_CC_DINERS="True"
- SHOP_PGC_CC_DISCOVER="True"
- SHOP_PGC_CC_JCB="True"
- SHOP_PGC_CC_MAESTRO="True"
- SHOP_PGC_CC_MASTERCARD="True"
- SHOP_PGC_CC_UNIONPAY="True"
- SHOP_PGC_CC_VISA="True"
- # Either use "debit" or "preauthorize" transaction requests
- SHOP_PGC_CC_TYPE="debit"
- SHOP_PGC_CC_TYPE_AMEX="debit"
- SHOP_PGC_CC_TYPE_DINERS="debit"
- SHOP_PGC_CC_TYPE_DISCOVER="debit"
- SHOP_PGC_CC_TYPE_JCB="debit"
- SHOP_PGC_CC_TYPE_MAESTRO="debit"
- SHOP_PGC_CC_TYPE_MASTERCARD="debit"
- SHOP_PGC_CC_TYPE_UNIONPAY="debit"
- SHOP_PGC_CC_TYPE_VISA="debit"
- ```
+#### Available Brands are:
+
+- VISA
+- MAESTRO
+- AMEX
+- DINERS
+- DISCOVER
+- JCB
+- MASTERCARD
+- UNIONPAY
+
+## Default Credentials:
+
+### User / Customer
+
+> **Login:** RobertZJohnson@einrot.com
+>
+> **Password:** customer
+
+### Admin
+
+> **Login:** user
+>
+> **Password:** bitnami1
