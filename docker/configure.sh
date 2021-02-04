@@ -44,7 +44,7 @@ for file_path in $(find $SRC_PATH/upload -not -path '*/\.*' -printf "%P\n"); do
     mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_extension_path\` SET \`extension_install_id\` = '${OC_EXT_ID}', \`path\`  = '${file_path}', \`date_added\`  = NOW();"
 done
 # Register Extension
-mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_modification\` SET \`extension_install_id\` = '${OC_EXT_ID}', \`name\` = '${DB_FIELD_NAME}', \`code\` = '$(echo "${DB_FIELD_NAME}" | sed '/^/{s/^//;s/\b\([[:alpha:]]\)\([[:alpha:]]*\)\b/\u\1\L\2/g;s/^//;}')', \`author\` = '${DB_FIELD_NAME}', \`version\` = '${BRANCH}', \`link\` = '', \`xml\` = '<modification>\n    <name>${DB_FIELD_NAME}</name>\n    <version>local-dev</version>\n    <author>${DB_FIELD_NAME}</author>\n    <code>$(echo "${DB_FIELD_NAME}" | sed '/^/{s/^//;s/\b\([[:alpha:]]\)\([[:alpha:]]*\)\b/\u\1\L\2/g;s/^//;}')</code>\n</modification>', \`status\` = '1', \`date_added\` = NOW();"
+mysql -B -h mariadb -u root bitnami_opencart -e "INSERT INTO \`oc_modification\` SET \`extension_install_id\` = '${OC_EXT_ID}', \`name\` = '${DB_FIELD_NAME}', \`code\` = '$(echo "${DB_FIELD_NAME}" | sed '/^/{s/^//;s/\b\([[:alpha:]]\)\([[:alpha:]]*\)\b/\u\1\L\2/g;s/^//;}')', \`author\` = '${DB_FIELD_NAME}', \`version\` = '${BRANCH:0:7}', \`link\` = '', \`xml\` = '<modification>\n    <name>${DB_FIELD_NAME}</name>\n    <version>${BRANCH:0:7}</version>\n    <author>${DB_FIELD_NAME}</author>\n    <code>$(echo "${DB_FIELD_NAME}" | sed '/^/{s/^//;s/\b\([[:alpha:]]\)\([[:alpha:]]*\)\b/\u\1\L\2/g;s/^//;}')</code>\n</modification>', \`status\` = '1', \`date_added\` = NOW();"
 
 echo -e "Configuration"
 
