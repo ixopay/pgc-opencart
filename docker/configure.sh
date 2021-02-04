@@ -12,7 +12,7 @@ echo -e "Installing Extension"
 echo -e "Checking out branch ${BRANCH} from ${REPOSITORY}"
 
 mkdir /tmp/paymentgatewaycloud
-curl -LJ "${REPOSITORY}/tarball/${BRANCH}" | tar -xz --strip-components=1 --directory=/tmp/paymentgatewaycloud
+curl -LJ "${REPOSITORY}/archive/${BRANCH}.tar.gz" | tar -xz --strip-components=1 --directory=/tmp/paymentgatewaycloud
 cd /tmp/paymentgatewaycloud
 
 if [ ! -z "${WHITELABEL}" ]; then
